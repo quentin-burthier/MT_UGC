@@ -12,10 +12,10 @@ Code tested with
 ### Environment variables
 
 Please set `MARIAN`, `TOOLS` and `DATA` environment variables to the correct locations.
-For instance if everything is in `~/`
+For instance if everything is in `~/` and you are working on the MTNT dataset
 
 ```bash
 export MARIAN=$HOME/marian/build
 export TOOLS=$HOME/marian-dev/examples/tools
-export DATA=$HOME/data
+export DATA=$HOME/data/MTNT
 ```
