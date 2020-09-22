@@ -48,15 +48,15 @@ The model is configured as follows:
 ```
 $MARIAN/build/marian \
     --model model/ens$i/model.npz --type transformer \
-    --train-sets data/all.bpe.en data/all.bpe.de \
+    --train-sets $DATA/all.bpe.en $DATA/all.bpe.de \
     --max-length 100 \
     --vocabs model/vocab.ende.yml model/vocab.ende.yml \
     --mini-batch-fit -w $WORKSPACE --mini-batch 1000 --maxi-batch 1000 \
     --valid-freq 5000 --save-freq 5000 --disp-freq 500 \
     --valid-metrics ce-mean-words perplexity translation \
-    --valid-sets data/valid.bpe.en data/valid.bpe.de \
+    --valid-sets $DATA/valid.bpe.en $DATA/valid.bpe.de \
     --valid-script-path ./scripts/validate.sh \
-    --valid-translation-output data/valid.bpe.en.output --quiet-translation \
+    --valid-translation-output $DATA/valid.bpe.en.output --quiet-translation \
     --beam-size 12 --normalize=1 \
     --valid-mini-batch 64 \
     --overwrite --keep-best \

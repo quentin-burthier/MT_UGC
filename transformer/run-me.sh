@@ -28,7 +28,7 @@ then
     exit 1
 fi
 
-if [ ! -e "$DATA/corpus.$SRC" ]
+if [ ! -e "$DATA/train/train.$SRC" ]
 then
     ./scripts/download-files.sh
 fi
@@ -36,7 +36,7 @@ fi
 mkdir -p model
 
 # preprocess data
-if [ ! -e "$DATA/corpus.bpe.$SRC" ]
+if [ ! -e "$DATA/train/train.bpe.$SRC" ]
 then
     LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt13 -l $SRC-$TGT --echo src > $DATA/valid.$SRC
     LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt13 -l $SRC-$TGT --echo ref > $DATA/valid.$TGT
@@ -51,7 +51,7 @@ fi
 # create common vocabulary
 if [ ! -e "model/vocab.$SRCde.yml" ]
 then
-    cat $DATA/corpus.bpe.$SRC $DATA/corpus.bpe.$TGT | $MARIAN_VOCAB --max-size 36000 > model/vocab.$SRCde.yml
+    cat $DATA/train/train.bpe.$SRC $DATA/train/train.bpe.$TGT | $MARIAN_VOCAB --max-size 36000 > model/vocab.$SRCde.yml
 fi
 
 # train model
@@ -59,7 +59,7 @@ if [ ! -e "model/model.npz" ]
 then
     $MARIAN_TRAIN \
         --model model/model.npz --type transformer \
-        --train-sets $DATA/corpus.bpe.$SRC $DATA/corpus.bpe.$TGT \
+        --train-sets $DATA/train/train.bpe.$SRC $DATA/train/train.bpe.$TGT \
         --max-length 100 \
         --vocabs model/vocab.$SRCde.yml model/vocab.$SRCde.yml \
         --mini-batch-fit -w 10000 --maxi-batch 1000 \

@@ -37,25 +37,25 @@ fi
 mkdir -p model
 
 # preprocess data
-if [ ! -e "data/corpus.bpe.$SRC" ]
+if [ ! -e "$DATA/train/train.bpe.$SRC" ]
 then
-    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt16 -l $SRC.$TGT --echo src > data/valid.$SRC
-    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt16 -l $SRC.$TGT --echo ref > data/valid.$TGT
+    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt16 -l $SRC.$TGT --echo src > $DATA/valid.$SRC
+    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt16 -l $SRC.$TGT --echo ref > $DATA/valid.$TGT
 
-    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt14 -l $SRC.$TGT --echo src > data/test2014.$SRC
-    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt15 -l $SRC.$TGT --echo src > data/test2015.$SRC
-    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt16 -l $SRC.$TGT --echo src > data/test2016.$SRC
-    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt17 -l $SRC.$TGT --echo src > data/test2017.$SRC
+    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt14 -l $SRC.$TGT --echo src > $DATA/test2014.$SRC
+    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt15 -l $SRC.$TGT --echo src > $DATA/test2015.$SRC
+    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt16 -l $SRC.$TGT --echo src > $DATA/test2016.$SRC
+    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt17 -l $SRC.$TGT --echo src > $DATA/test2017.$SRC
 
     ./scripts/preprocess-data.sh
 fi
 
-if [ ! -e "data/monolingual/dev.$TGT" ]
+if [ ! -e "$DATA/monolingual/dev.$TGT" ]
 then
     ./scripts/download-files-mono.sh
 fi
 
-if [ ! -e "data/monolingual/dev.$TGT" ]
+if [ ! -e "$DATA/monolingual/dev.$TGT" ]
 then
     ./scripts/preprocess-data-mono.sh
 fi
@@ -63,7 +63,7 @@ fi
 # create common vocabulary
 if [ ! -e "model/vocab.$SRC$TGT.yml" ]
 then
-    cat data/corpus.bpe.$SRC data/corpus.bpe.$TGT | $MARIAN_VOCAB --max-size 36000 > model/vocab.$SRC$TGT.yml
+    cat $DATA/train/train.bpe.$SRC $DATA/train/train.bpe.$TGT | $MARIAN_VOCAB --max-size 36000 > model/vocab.$SRC$TGT.yml
 fi
 
 # train model
@@ -72,15 +72,15 @@ if [ ! -e "model.back/model.npz.best-translation.npz" ]
 then
     $MARIAN_TRAIN \
         --model model.back/model.npz --type s2s \
-        --train-sets data/corpus.bpe.$TGT data/corpus.bpe.$SRC \
+        --train-sets $DATA/train/train.bpe.$TGT $DATA/train/train.bpe.$SRC \
         --max-length 100 \
         --vocabs model/vocab.$SRC$TGT.yml model/vocab.$SRC$TGT.yml \
         --mini-batch-fit -w 3500 --maxi-batch 1000 \
         --valid-freq 10000 --save-freq 10000 --disp-freq 1000 \
         --valid-metrics ce-mean-words perplexity translation \
         --valid-script-path "bash ./scripts/validate.$SRC.sh" \
-        --valid-translation-output data/valid.bpe.$TGT.output --quiet-translation \
-        --valid-sets data/valid.bpe.$TGT data/valid.bpe.$SRC \
+        --valid-translation-output $DATA/valid.bpe.$TGT.output --quiet-translation \
+        --valid-sets $DATA/valid.bpe.$TGT $DATA/valid.bpe.$SRC \
         --valid-mini-batch 64 --beam-size 12 --normalize=1 \
         --overwrite --keep-best \
         --early-stopping 5 --after-epochs 10 --cost-type=ce-mean-words \
@@ -90,21 +90,21 @@ then
         --exponential-smoothing
 fi
 
-if [ ! -e "data/monolingual/dev.bpe.$SRC" ]
+if [ ! -e "$DATA/monolingual/dev.bpe.$SRC" ]
 then
     $MARIAN_DECODER \
       -c model.back/model.npz.best-translation.npz.$TGTcoder.yml \
-      -i data/monolingual/dev.bpe.$TGT \
+      -i $DATA/monolingual/dev.bpe.$TGT \
       -b 6 --normalize=1 -w 2500 -d $GPUS \
       --mini-batch 64 --maxi-batch 100 --maxi-batch-sort src \
       --max-length 200 --max-length-crop \
-      > data/monolingual/dev.bpe.$SRC
+      > $DATA/monolingual/dev.bpe.$SRC
 fi
 
-if [ ! -e "data/all.bpe.$SRC" ]
+if [ ! -e "$DATA/all.bpe.$SRC" ]
 then
-    cat data/corpus.bpe.$SRC data/corpus.bpe.$SRC data/monolingual/dev.bpe.$SRC > data/all.bpe.$SRC
-    cat data/corpus.bpe.$TGT data/corpus.bpe.$TGT data/monolingual/dev.bpe.$TGT > data/all.bpe.$TGT
+    cat $DATA/train/train.bpe.$SRC $DATA/train/train.bpe.$SRC $DATA/monolingual/dev.bpe.$SRC > $DATA/all.bpe.$SRC
+    cat $DATA/train/train.bpe.$TGT $DATA/train/train.bpe.$TGT $DATA/monolingual/dev.bpe.$TGT > $DATA/all.bpe.$TGT
 fi
 
 for i in $(seq 1 $N)
@@ -113,15 +113,15 @@ do
   # train model
     $MARIAN_TRAIN \
         --model model/ens$i/model.npz --type transformer \
-        --train-sets data/all.bpe.$SRC data/all.bpe.$TGT \
+        --train-sets $DATA/all.bpe.$SRC $DATA/all.bpe.$TGT \
         --max-length 100 \
         --vocabs model/vocab.$SRC$TGT.yml model/vocab.$SRC$TGT.yml \
         --mini-batch-fit -w $WORKSPACE --mini-batch 1000 --maxi-batch 1000 \
         --valid-freq 5000 --save-freq 5000 --disp-freq 500 \
         --valid-metrics ce-mean-words perplexity translation \
-        --valid-sets data/valid.bpe.$SRC data/valid.bpe.$TGT \
+        --valid-sets $DATA/valid.bpe.$SRC $DATA/valid.bpe.$TGT \
         --valid-script-path "bash ./scripts/validate.sh" \
-        --valid-translation-output data/valid.bpe.$SRC.output --quiet-translation \
+        --valid-translation-output $DATA/valid.bpe.$SRC.output --quiet-translation \
         --beam-size 12 --normalize=1 \
         --valid-mini-batch 64 \
         --overwrite --keep-best \
@@ -142,15 +142,15 @@ do
   # train model
     $MARIAN_TRAIN \
         --model model/ens-rtl$i/model.npz --type transformer \
-        --train-sets data/all.bpe.$SRC data/all.bpe.$TGT \
+        --train-sets $DATA/all.bpe.$SRC $DATA/all.bpe.$TGT \
         --max-length 100 \
         --vocabs model/vocab.$SRC$TGT.yml model/vocab.$SRC$TGT.yml \
         --mini-batch-fit -w $WORKSPACE --mini-batch 1000 --maxi-batch 1000 \
         --valid-freq 5000 --save-freq 5000 --disp-freq 500 \
         --valid-metrics ce-mean-words perplexity translation \
-        --valid-sets data/valid.bpe.$SRC data/valid.bpe.$TGT \
+        --valid-sets $DATA/valid.bpe.$SRC $DATA/valid.bpe.$TGT \
         --valid-script-path  "bash ./scripts/validate.sh" \
-        --valid-translation-output data/valid.bpe.$SRC.output --quiet-translation \
+        --valid-translation-output $DATA/valid.bpe.$SRC.output --quiet-translation \
         --beam-size 12 --normalize=1 \
         --valid-mini-batch 64 \
         --overwrite --keep-best \
@@ -168,27 +168,27 @@ done
 # translate test sets
 for prefix in valid test
 do
-    cat data/$prefix/$prefix.bpe.$SRC \
+    cat $DATA/$prefix/$prefix.bpe.$SRC \
         | $MARIAN_DECODER -c model/ens1/model.npz.best-translation.npz.decoder.yml \
           -m model/ens?/model.npz.best-translation.npz -d $GPUS \
           --mini-batch 16 --maxi-batch 100 --maxi-batch-sort src -w 5000 --n-best --beam-size $B \
-        > data/$prefix/$prefix.bpe.$SRC.output.nbest.0
+        > $DATA/$prefix/$prefix.bpe.$SRC.output.nbest.0
 
     for i in $(seq 1 $N)
     do
       $MARIAN_SCORER -m model/ens-rtl$i/model.npz.best-perplexity.npz \
         -v model/vocab.$SRC$TGT.yml model/vocab.$SRC$TGT.yml -d $GPUS \
         --mini-batch 16 --maxi-batch 100 --maxi-batch-sort trg --n-best --n-best-feature R2L$(expr $i - 1) \
-        -t data/$prefix/$prefix.bpe.$SRC data/$prefix/$prefix.bpe.$SRC.output.nbest.$(expr $i - 1) > data/$prefix/$prefix.bpe.$SRC.output.nbest.$i
+        -t $DATA/$prefix/$prefix.bpe.$SRC $DATA/$prefix/$prefix.bpe.$SRC.output.nbest.$(expr $i - 1) > $DATA/$prefix/$prefix.bpe.$SRC.output.nbest.$i
     done
 
-    cat data/$prefix/$prefix.bpe.$SRC.output.nbest.$N \
+    cat $DATA/$prefix/$prefix.bpe.$SRC.output.nbest.$N \
       | python scripts/rescore.py \
       | perl -pe 's/@@ //g' \
       | $TOOLS/moses-scripts/scripts/recaser/detruecase.perl \
-      | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl > data/$prefix/$prefix.$SRC.output
+      | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl > $DATA/$prefix/$prefix.$SRC.output
 done
 
 # calculate bleu scores on test sets
-LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt16 -l $SRC.$TGT < data/valid/valid.$SRC.output
-LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt14 -l $SRC.$TGT < data/test/test.$SRC.output
+LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt16 -l $SRC.$TGT < $DATA/valid/valid.$SRC.output
+LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt14 -l $SRC.$TGT < $DATA/test/test.$SRC.output
