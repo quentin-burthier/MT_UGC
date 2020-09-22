@@ -50,12 +50,12 @@ then
     ./scripts/preprocess-data.sh
 fi
 
-if [ ! -e "data/news.2016.$TGT" ]
+if [ ! -e "data/monolingual/dev.$TGT" ]
 then
     ./scripts/download-files-mono.sh
 fi
 
-if [ ! -e "data/news.2016.bpe.$TGT" ]
+if [ ! -e "data/monolingual/dev.$TGT" ]
 then
     ./scripts/preprocess-data-mono.sh
 fi
@@ -90,21 +90,21 @@ then
         --exponential-smoothing
 fi
 
-if [ ! -e "data/news.2016.bpe.$SRC" ]
+if [ ! -e "data/monolingual/dev.bpe.$SRC" ]
 then
     $MARIAN_DECODER \
       -c model.back/model.npz.best-translation.npz.$TGTcoder.yml \
-      -i data/news.2016.bpe.$TGT \
+      -i data/monolingual/dev.bpe.$TGT \
       -b 6 --normalize=1 -w 2500 -d $GPUS \
       --mini-batch 64 --maxi-batch 100 --maxi-batch-sort src \
       --max-length 200 --max-length-crop \
-      > data/news.2016.bpe.$SRC
+      > data/monolingual/dev.bpe.$SRC
 fi
 
 if [ ! -e "data/all.bpe.$SRC" ]
 then
-    cat data/corpus.bpe.$SRC data/corpus.bpe.$SRC data/news.2016.bpe.$SRC > data/all.bpe.$SRC
-    cat data/corpus.bpe.$TGT data/corpus.bpe.$TGT data/news.2016.bpe.$TGT > data/all.bpe.$TGT
+    cat data/corpus.bpe.$SRC data/corpus.bpe.$SRC data/monolingual/dev.bpe.$SRC > data/all.bpe.$SRC
+    cat data/corpus.bpe.$TGT data/corpus.bpe.$TGT data/monolingual/dev.bpe.$TGT > data/all.bpe.$TGT
 fi
 
 for i in $(seq 1 $N)
@@ -166,31 +166,29 @@ do
 done
 
 # translate test sets
-for prefix in valid test2014 test2015 test2017
+for prefix in valid test
 do
-    cat data/$prefix.bpe.$SRC \
+    cat data/$prefix/$prefix.bpe.$SRC \
         | $MARIAN_DECODER -c model/ens1/model.npz.best-translation.npz.decoder.yml \
           -m model/ens?/model.npz.best-translation.npz -d $GPUS \
           --mini-batch 16 --maxi-batch 100 --maxi-batch-sort src -w 5000 --n-best --beam-size $B \
-        > data/$prefix.bpe.$SRC.output.nbest.0
+        > data/$prefix/$prefix.bpe.$SRC.output.nbest.0
 
     for i in $(seq 1 $N)
     do
       $MARIAN_SCORER -m model/ens-rtl$i/model.npz.best-perplexity.npz \
         -v model/vocab.$SRC$TGT.yml model/vocab.$SRC$TGT.yml -d $GPUS \
         --mini-batch 16 --maxi-batch 100 --maxi-batch-sort trg --n-best --n-best-feature R2L$(expr $i - 1) \
-        -t data/$prefix.bpe.$SRC data/$prefix.bpe.$SRC.output.nbest.$(expr $i - 1) > data/$prefix.bpe.$SRC.output.nbest.$i
+        -t data/$prefix/$prefix.bpe.$SRC data/$prefix/$prefix.bpe.$SRC.output.nbest.$(expr $i - 1) > data/$prefix/$prefix.bpe.$SRC.output.nbest.$i
     done
 
-    cat data/$prefix.bpe.$SRC.output.nbest.$N \
+    cat data/$prefix/$prefix.bpe.$SRC.output.nbest.$N \
       | python scripts/rescore.py \
       | perl -pe 's/@@ //g' \
       | $TOOLS/moses-scripts/scripts/recaser/detruecase.perl \
-      | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl > data/$prefix.$SRC.output
+      | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl > data/$prefix/$prefix.$SRC.output
 done
 
 # calculate bleu scores on test sets
-LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt16 -l $SRC.$TGT < data/valid.$SRC.output
-LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt14 -l $SRC.$TGT < data/test2014.$SRC.output
-LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt15 -l $SRC.$TGT < data/test2015.$SRC.output
-LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt17 -l $SRC.$TGT < data/test2017.$SRC.output
+LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt16 -l $SRC.$TGT < data/valid/valid.$SRC.output
+LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt14 -l $SRC.$TGT < data/test/test.$SRC.output
