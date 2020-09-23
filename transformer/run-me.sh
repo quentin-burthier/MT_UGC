@@ -1,18 +1,18 @@
 #!/bin/bash -v
 
 # suffix of source language files
-SRC=en
+src=en
 # suffix of target language files
-TRG=fr
+tgt=fr
 
 # MTNT and processed data paths
-MTNT=$DATA/MTNT
-DIR=$MTNT/$SRC.$TGT
+mtnt=$DATA/MTNT
+dir=$mtnt/$src.$tgt
 
-MARIAN_TRAIN=$MARIAN/marian
-MARIAN_DECODER=$MARIAN/marian-decoder
-MARIAN_VOCAB=$MARIAN/marian-vocab
-MARIAN_SCORER=$MARIAN/marian-scorer
+marian_train=$MARIAN/marian
+marian_decoder=$MARIAN/marian-decoder
+marian_vocab=$MARIAN/marian-vocab
+marian_scorer=$MARIAN/marian-scorer
 
 # set chosen gpus
 GPUS=0
@@ -22,7 +22,7 @@ then
 fi
 echo Using GPUs: $GPUS
 
-if [ ! -e $MARIAN_TRAIN ]
+if [ ! -e $marian_train ]
 then
     echo "marian is not installed in $MARIAN, you need to compile the toolkit first"
     exit 1
@@ -34,7 +34,7 @@ then
     exit 1
 fi
 
-if [ ! -e "$MTNT" ]
+if [ ! -e "$mtnt" ]
 then
     ./scripts/download-files.sh
 fi
@@ -42,32 +42,32 @@ fi
 mkdir -p model
 
 # preprocess data
-if [ ! -e "$DIR" ]
+if [ ! -e "$dir" ]
 then
     ./scripts/preprocess-data.sh
 fi
 
 # create common vocabulary
-if [ ! -e "model/vocab.$SRC$TGT.yml" ]
+if [ ! -e "model/vocab.$src$tgt.yml" ]
 then
-    cat $DIR/bpe/train.$SRC $DIR/bpe/train.$TGT | $MARIAN_VOCAB --max-size 36000 > model/vocab.$SRC$TGT.yml
+    cat $dir/bpe/train.$src $dir/bpe/train.$tgt | $marian_vocab --max-size 36000 > model/vocab.$src$tgt.yml
 fi
 
 # train model
 if [ ! -e "model/model.npz" ]
 then
-    $MARIAN_TRAIN \
+    $marian_train \
         --model model/model.npz --type transformer \
-        --train-sets $DIR/bpe/train.$SRC $DIR/bpe/train.$TGT \
+        --train-sets $dir/bpe/train.$src $dir/bpe/train.$tgt \
         --max-length 100 \
-        --vocabs model/vocab.$SRC$TGT.yml model/vocab.$SRC$TGT.yml \
+        --vocabs model/vocab.$src$tgt.yml model/vocab.$src$tgt.yml \
         --mini-batch-fit -w 10000 --maxi-batch 1000 \
         --early-stopping 10 --cost-type=ce-mean-words \
         --valid-freq 5000 --save-freq 5000 --disp-freq 500 \
         --valid-metrics ce-mean-words perplexity translation \
-        --valid-sets $DIR/bpe/valid.$SRC $DIR/bpe/valid.$TGT \
+        --valid-sets $dir/bpe/valid.$src $dir/bpe/valid.$tgt \
         --valid-script-path "bash ./scripts/validate.sh" \
-        --valid-translation-output $DIR/bpe/valid.$SRC.output --quiet-translation \
+        --valid-translation-output $dir/output/valid.$src --quiet-translation \
         --valid-mini-batch 64 \
         --beam-size 6 --normalize 0.6 \
         --log model/train.log --valid-log model/valid.log \
@@ -89,13 +89,13 @@ ITER=`cat model/valid.log | grep translation | sort -rg -k12,12 -t' ' | cut -f8 
 # translate test sets
 for split in valid test
 do
-    cat $DIR/$bpe/$split.$SRC \
-        | $MARIAN_DECODER -c model/model.npz.decoder.yml -m model/model.iter$ITER.npz -d $GPUS -b 12 -n -w 6000 \
+    cat $dir/$bpe/$split.$src \
+        | $marian_decoder -c model/model.npz.decoder.yml -m model/model.iter$ITER.npz -d $GPUS -b 12 -n -w 6000 \
         | sed 's/\@\@ //g' \
         | $TOOLS/moses-scripts/scripts/recaser/detruecase.perl \
-        | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl -l $TGT \
-        > $DIR/output/$split.$TGT.output
+        | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl -l $tgt \
+        > $dir/output/$split.$tgt
 done
 
 # calculate bleu scores on test sets
-LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt14 -l $SRC-$TGT < $DIR/output/test.$TGT
+LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt14 -l $src-$tgt < $dir/output/test.$tgt

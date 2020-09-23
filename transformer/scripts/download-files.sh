@@ -9,4 +9,3 @@ tar -C $DATA -xf $DATA/MTNT.1.1.tar.gz
 
 # clean
 rm -r $DATA/MTNT.1.1.tar.gz
-./$DATA/MTNT/split_tsv.h

@@ -27,6 +27,6 @@ or in a conda environement (see
 conda activate nmt
 conda env config vars set MARIAN=$HOME/marian-dev/build
 conda env config vars set TOOLS=$HOME/marian-dev/examples/tools
-conda env config vars set DATA=$HOME/robust_bench/data/MTNT
+conda env config vars set DATA=$HOME/robust_bench/data
 conda activate nmt
 ```
