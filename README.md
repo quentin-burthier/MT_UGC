@@ -12,10 +12,21 @@ Code tested with
 ### Environment variables
 
 Please set `MARIAN`, `TOOLS` and `DATA` environment variables to the correct locations.
-For instance if everything is in `~/`
+For instance if everything is in `~/` and you are working on the MTNT dataset
 
 ```bash
-export MARIAN=$HOME/marian/build
+export MARIAN=$HOME/marian-dev/build
 export TOOLS=$HOME/marian-dev/examples/tools
-export DATA=$HOME/data
+export DATA=$HOME/robust_bench/data
+```
+
+or in a conda environement (see
+[conda documentation](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#setting-environment-variables))
+
+```bash
+conda activate nmt
+conda env config vars set MARIAN=$HOME/marian-dev/build
+conda env config vars set TOOLS=$HOME/marian-dev/examples/tools
+conda env config vars set DATA=$HOME/robust_bench/data
+conda activate nmt
 ```
