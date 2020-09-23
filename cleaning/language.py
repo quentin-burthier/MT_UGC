@@ -26,8 +26,10 @@ def correct_language_pair(identifier: LanguageIdentifier,
 
 
 if __name__ == "__main__":
+    from os import environ
+    DATA = environ["DATA"]
     SRC = "en"
     TGT = "fr" 
-    DATA_PATH = f"data/MTNT/train/train.{SRC}-{TGT}.tsv"
+    DATA_PATH = f"{DATA}/train/train.{SRC}-{TGT}.tsv"
     FILTERED_PATH = f"data_cleaned/{SRC}-{TGT}.tsv"
     main(DATA_PATH, FILTERED_PATH, SRC, TGT)
