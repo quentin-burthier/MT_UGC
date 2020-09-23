@@ -16,17 +16,17 @@ mosesdecoder=$TOOLS/moses-scripts
 subword_nmt=$TOOLS/subword-nmt
 
 # tokenize
-for prefix in corpus valid test2014 test2015 test2016 test2017
+for split in corpus valid test2014 test2015 test2016 test2017
 do
-    cat $DATA/$prefix/$prefix.$SRC \
+    cat $DATA/$split/$split.$SRC \
         | $mosesdecoder/scripts/tokenizer/normalize-punctuation.perl -l $SRC \
-        | $mosesdecoder/scripts/tokenizer/tokenizer.perl -a -l $SRC > $DATA/$prefix/$prefix.tok.$SRC
+        | $mosesdecoder/scripts/tokenizer/tokenizer.perl -a -l $SRC > $DATA/$split/$split.tok.$SRC
 
-    test -f $DATA/$prefix/$prefix.$TRG || continue
+    test -f $DATA/$split/$split.$TRG || continue
 
-    cat $DATA/$prefix/$prefix.$TRG \
+    cat $DATA/$split/$split.$TRG \
         | $mosesdecoder/scripts/tokenizer/normalize-punctuation.perl -l $TRG \
-        | $mosesdecoder/scripts/tokenizer/tokenizer.perl -a -l $TRG > $DATA/$prefix/$prefix.tok.$TRG
+        | $mosesdecoder/scripts/tokenizer/tokenizer.perl -a -l $TRG > $DATA/$split/$split.tok.$TRG
 done
 
 # clean empty and long sentences, and sentences with high source-target ratio (training corpus only)
@@ -39,20 +39,20 @@ $mosesdecoder/scripts/recaser/train-truecaser.perl -corpus $DATA/train/train.tok
 $mosesdecoder/scripts/recaser/train-truecaser.perl -corpus $DATA/train/train.tok.$TRG -model model/tc.$TRG
 
 # apply truecaser (cleaned training corpus)
-for prefix in corpus valid test2014 test2015 test2016 test2017
+for split in corpus valid test2014 test2015 test2016 test2017
 do
-    $mosesdecoder/scripts/recaser/truecase.perl -model model/tc.$SRC < $DATA/$prefix/$prefix.tok.$SRC > $DATA/$prefix/$prefix.tc.$SRC
-    test -f $DATA/$prefix/$prefix.tok.$TRG || continue
-    $mosesdecoder/scripts/recaser/truecase.perl -model model/tc.$TRG < $DATA/$prefix/$prefix.tok.$TRG > $DATA/$prefix/$prefix.tc.$TRG
+    $mosesdecoder/scripts/recaser/truecase.perl -model model/tc.$SRC < $DATA/$split/$split.tok.$SRC > $DATA/$split/$split.tc.$SRC
+    test -f $DATA/$split/$split.tok.$TRG || continue
+    $mosesdecoder/scripts/recaser/truecase.perl -model model/tc.$TRG < $DATA/$split/$split.tok.$TRG > $DATA/$split/$split.tc.$TRG
 done
 
 # train BPE
 cat $DATA/train/train.tc.$SRC $DATA/train/train.tc.$TRG | $subword_nmt/learn_bpe.py -s $bpe_operations > model/$SRC$TRG.bpe
 
 # apply BPE
-for prefix in corpus valid test2014 test2015 test2016 test2017
+for split in corpus valid test2014 test2015 test2016 test2017
 do
-    $subword_nmt/apply_bpe.py -c model/$SRC$TRG.bpe < $DATA/$prefix/$prefix.tc.$SRC > $DATA/$prefix/$prefix.bpe.$SRC
-    test -f $DATA/$prefix/$prefix.tc.$TRG || continue
-    $subword_nmt/apply_bpe.py -c model/$SRC$TRG.bpe < $DATA/$prefix/$prefix.tc.$TRG > $DATA/$prefix/$prefix.bpe.$TRG
+    $subword_nmt/apply_bpe.py -c model/$SRC$TRG.bpe < $DATA/$split/$split.tc.$SRC > $DATA/$split/$split.bpe.$SRC
+    test -f $DATA/$split/$split.tc.$TRG || continue
+    $subword_nmt/apply_bpe.py -c model/$SRC$TRG.bpe < $DATA/$split/$split.tc.$TRG > $DATA/$split/$split.bpe.$TRG
 done

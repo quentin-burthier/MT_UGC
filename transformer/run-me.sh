@@ -88,14 +88,14 @@ fi
 ITER=`cat model/valid.log | grep translation | sort -rg -k12,12 -t' ' | cut -f8 -d' ' | head -n1`
 
 # translate test sets
-for prefix in valid test
+for split in valid test
 do
-    cat $DATA/$prefix/$prefix.bpe.$SRC \
+    cat $DATA/$split/$split.bpe.$SRC \
         | $MARIAN_DECODER -c model/model.npz.decoder.yml -m model/model.iter$ITER.npz -d $GPUS -b 12 -n -w 6000 \
         | sed 's/\@\@ //g' \
         | $TOOLS/moses-scripts/scripts/recaser/detruecase.perl \
         | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl -l $TGT \
-        > $DATA/$prefix/$prefix.$TGT.output
+        > $DATA/$split/$split.$TGT.output
 done
 
 # calculate bleu scores on test sets

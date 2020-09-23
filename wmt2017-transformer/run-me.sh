@@ -166,27 +166,27 @@ do
 done
 
 # translate test sets
-for prefix in valid test
+for split in valid test
 do
-    cat $DATA/$prefix/$prefix.bpe.$SRC \
+    cat $DATA/$split/$split.bpe.$SRC \
         | $MARIAN_DECODER -c model/ens1/model.npz.best-translation.npz.decoder.yml \
           -m model/ens?/model.npz.best-translation.npz -d $GPUS \
           --mini-batch 16 --maxi-batch 100 --maxi-batch-sort src -w 5000 --n-best --beam-size $B \
-        > $DATA/$prefix/$prefix.bpe.$SRC.output.nbest.0
+        > $DATA/$split/$split.bpe.$SRC.output.nbest.0
 
     for i in $(seq 1 $N)
     do
       $MARIAN_SCORER -m model/ens-rtl$i/model.npz.best-perplexity.npz \
         -v model/vocab.$SRC$TGT.yml model/vocab.$SRC$TGT.yml -d $GPUS \
         --mini-batch 16 --maxi-batch 100 --maxi-batch-sort trg --n-best --n-best-feature R2L$(expr $i - 1) \
-        -t $DATA/$prefix/$prefix.bpe.$SRC $DATA/$prefix/$prefix.bpe.$SRC.output.nbest.$(expr $i - 1) > $DATA/$prefix/$prefix.bpe.$SRC.output.nbest.$i
+        -t $DATA/$split/$split.bpe.$SRC $DATA/$split/$split.bpe.$SRC.output.nbest.$(expr $i - 1) > $DATA/$split/$split.bpe.$SRC.output.nbest.$i
     done
 
-    cat $DATA/$prefix/$prefix.bpe.$SRC.output.nbest.$N \
+    cat $DATA/$split/$split.bpe.$SRC.output.nbest.$N \
       | python scripts/rescore.py \
       | perl -pe 's/@@ //g' \
       | $TOOLS/moses-scripts/scripts/recaser/detruecase.perl \
-      | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl > $DATA/$prefix/$prefix.$SRC.output
+      | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl > $DATA/$split/$split.$SRC.output
 done
 
 # calculate bleu scores on test sets
