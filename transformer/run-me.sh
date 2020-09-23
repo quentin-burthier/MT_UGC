@@ -1,7 +1,13 @@
 #!/bin/bash -v
 
+# suffix of source language files
 SRC=en
-TGT=de
+# suffix of target language files
+TRG=fr
+
+# MTNT and processed data paths
+MTNT=$DATA/MTNT
+DIR=$MTNT/$SRC.$TGT
 
 MARIAN_TRAIN=$MARIAN/marian
 MARIAN_DECODER=$MARIAN/marian-decoder
@@ -28,7 +34,7 @@ then
     exit 1
 fi
 
-if [ ! -e "$DATA" ]
+if [ ! -e "$MTNT" ]
 then
     ./scripts/download-files.sh
 fi
@@ -36,22 +42,15 @@ fi
 mkdir -p model
 
 # preprocess data
-if [ ! -e "$DATA/train/train.bpe.$SRC" ]
+if [ ! -e "$DIR" ]
 then
-    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt13 -l $SRC-$TGT --echo src > $DATA/valid.$SRC
-    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt13 -l $SRC-$TGT --echo ref > $DATA/valid.$TGT
-
-    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt14 -l $SRC-$TGT --echo src > $DATA/test2014.$SRC
-    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt15 -l $SRC-$TGT --echo src > $DATA/test2015.$SRC
-    LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt16 -l $SRC-$TGT --echo src > $DATA/test2016.$SRC
-
     ./scripts/preprocess-data.sh
 fi
 
 # create common vocabulary
-if [ ! -e "model/vocab.$SRCde.yml" ]
+if [ ! -e "model/vocab.$SRC$TGT.yml" ]
 then
-    cat $DATA/train/train.bpe.$SRC $DATA/train/train.bpe.$TGT | $MARIAN_VOCAB --max-size 36000 > model/vocab.$SRCde.yml
+    cat $DIR/bpe/train.$SRC $DIR/bpe/train.$TGT | $MARIAN_VOCAB --max-size 36000 > model/vocab.$SRC$TGT.yml
 fi
 
 # train model
@@ -59,16 +58,16 @@ if [ ! -e "model/model.npz" ]
 then
     $MARIAN_TRAIN \
         --model model/model.npz --type transformer \
-        --train-sets $DATA/train/train.bpe.$SRC $DATA/train/train.bpe.$TGT \
+        --train-sets $DIR/bpe/train.$SRC $DIR/bpe/train.$TGT \
         --max-length 100 \
-        --vocabs model/vocab.$SRCde.yml model/vocab.$SRCde.yml \
+        --vocabs model/vocab.$SRC$TGT.yml model/vocab.$SRC$TGT.yml \
         --mini-batch-fit -w 10000 --maxi-batch 1000 \
         --early-stopping 10 --cost-type=ce-mean-words \
         --valid-freq 5000 --save-freq 5000 --disp-freq 500 \
         --valid-metrics ce-mean-words perplexity translation \
-        --valid-sets $DATA/valid.bpe.$SRC $DATA/valid.bpe.$TGT \
+        --valid-sets $DIR/bpe/valid.$SRC $DIR/bpe/valid.$TGT \
         --valid-script-path "bash ./scripts/validate.sh" \
-        --valid-translation-output $DATA/valid.bpe.$SRC.output --quiet-translation \
+        --valid-translation-output $DIR/bpe/valid.$SRC.output --quiet-translation \
         --valid-mini-batch 64 \
         --beam-size 6 --normalize 0.6 \
         --log model/train.log --valid-log model/valid.log \
@@ -90,13 +89,13 @@ ITER=`cat model/valid.log | grep translation | sort -rg -k12,12 -t' ' | cut -f8 
 # translate test sets
 for split in valid test
 do
-    cat $DATA/$split/$split.bpe.$SRC \
+    cat $DIR/$bpe/$split.$SRC \
         | $MARIAN_DECODER -c model/model.npz.decoder.yml -m model/model.iter$ITER.npz -d $GPUS -b 12 -n -w 6000 \
         | sed 's/\@\@ //g' \
         | $TOOLS/moses-scripts/scripts/recaser/detruecase.perl \
         | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl -l $TGT \
-        > $DATA/$split/$split.$TGT.output
+        > $DIR/output/$split.$TGT.output
 done
 
 # calculate bleu scores on test sets
-LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt14 -l $SRC-$TGT < $DATA/test/test.$TGT.output
+LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt14 -l $SRC-$TGT < $DIR/output/test.$TGT

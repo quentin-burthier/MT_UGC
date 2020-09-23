@@ -2,9 +2,12 @@
 
 # suffix of source language files
 SRC=en
-
 # suffix of target language files
 TRG=fr
+
+# MTNT and processed data paths
+MTNT=$DATA/MTNT
+DIR=$MTNT/$SRC.$TGT
 
 # number of merge operations
 bpe_operations=32000
@@ -16,58 +19,50 @@ mosesdecoder=$TOOLS/moses-scripts
 subword_nmt=$TOOLS/subword-nmt
 
 # Split tsv (adapted from the MTNT script)
-DIR=$DATA/MTNT
 for split in train valid test
 do
-  for lang in fr ja
-  do
-    # en -> $lang
-    cut -f2 $DIR/$split/$split.en-$lang.tsv > $DIR/$split/$split.en-$lang.en
-    cut -f3 $DIR/$split/$split.en-$lang.tsv > $DIR/$split/$split.en-$lang.$lang
-    # $lang -> en
-    cut -f2 $DIR/$split/$split.$lang-en.tsv > $DIR/$split/$split.$lang-en.$lang
-    cut -f3 $DIR/$split/$split.$lang-en.tsv > $DIR/$split/$split.$lang-en.en
-  done
+    cut -f2 $MTNT/$split/$split.$SRC-$TGT.tsv > $DIR/splitted/$split.$SRC
+    cut -f3 $MTNT/$split/$split.$SRC-$TGT.tsv > $DIR/splitted/$split.$TGT
 done
 
 # tokenize
 for split in train valid test
 do
-    cat $DATA/$split/$split.$SRC-$TGT.$SRC \
+    cat $DIR/splitted/$split.$SRC \
         | $mosesdecoder/scripts/tokenizer/normalize-punctuation.perl -l $SRC \
-        | $mosesdecoder/scripts/tokenizer/tokenizer.perl -a -l $SRC > $DATA/$split/$split.tok.$SRC
+        | $mosesdecoder/scripts/tokenizer/tokenizer.perl -a -l $SRC > $DIR/tok/$split.$SRC
 
-    test -f $DATA/$split/$split.$TRG || continue
+    test -f $DIR/splitted/$split.$TRG || continue
 
-    cat $DATA/$split/$split.$TRG \
+    cat $DIR/splitted/$split.$TRG \
         | $mosesdecoder/scripts/tokenizer/normalize-punctuation.perl -l $TRG \
-        | $mosesdecoder/scripts/tokenizer/tokenizer.perl -a -l $TRG > $DATA/$split/$split.tok.$TRG
+        | $mosesdecoder/scripts/tokenizer/tokenizer.perl -a -l $TRG > $DIR/tok/$split.$TRG
 done
 
 # clean empty and long sentences, and sentences with high source-target ratio (training corpus only)
-mv $DATA/train/train.tok.$SRC $DATA/train/train.tok.uncleaned.$SRC
-mv $DATA/train/train.tok.$TRG $DATA/train/train.tok.uncleaned.$TRG
-$mosesdecoder/scripts/training/clean-corpus-n.perl $DATA/train/train.tok.uncleaned $SRC $TRG $DATA/train/train.tok 1 100
+mv $DIR/tok/train.$SRC $DIR/tok.uncleaned/train.$SRC
+mv $DIR/tok/train.$TRG $DIR/tok.uncleaned/train.$TRG
+$mosesdecoder/scripts/training/clean-corpus-n.perl $DIR/train.tok.uncleaned/train $SRC $TRG $DIR/train/train.tok 1 100
 
 # train truecaser
-$mosesdecoder/scripts/recaser/train-truecaser.perl -corpus $DATA/train/train.tok.$SRC -model model/tc.$SRC
-$mosesdecoder/scripts/recaser/train-truecaser.perl -corpus $DATA/train/train.tok.$TRG -model model/tc.$TRG
+$mosesdecoder/scripts/recaser/train-truecaser.perl -corpus $DIR/tok/train.$SRC -model model/tc.$SRC
+$mosesdecoder/scripts/recaser/train-truecaser.perl -corpus $DIR/tok/train.$TRG -model model/tc.$TRG
 
 # apply truecaser (cleaned training corpus)
 for split in train valid test
 do
-    $mosesdecoder/scripts/recaser/truecase.perl -model model/tc.$SRC < $DATA/$split/$split.tok.$SRC > $DATA/$split/$split.tc.$SRC
-    test -f $DATA/$split/$split.tok.$TRG || continue
-    $mosesdecoder/scripts/recaser/truecase.perl -model model/tc.$TRG < $DATA/$split/$split.tok.$TRG > $DATA/$split/$split.tc.$TRG
+    $mosesdecoder/scripts/recaser/truecase.perl -model model/tc.$SRC < $DIR/tok/$split.$SRC > $DIR/truecased/$split.$SRC
+    test -f $DIR/tok/$split.$TRG || continue
+    $mosesdecoder/scripts/recaser/truecase.perl -model model/tc.$TRG < $DIR/tok/$split.$TRG > $DIR/truecased/$split.$TRG
 done
 
 # train BPE
-cat $DATA/train/train.tc.$SRC $DATA/train/train.tc.$TRG | $subword_nmt/learn_bpe.py -s $bpe_operations > model/$SRC$TRG.bpe
+cat $DIR/train/train.tc.$SRC $DIR/train/train.tc.$TRG | $subword_nmt/learn_bpe.py -s $bpe_operations > model/$SRC$TRG.bpe
 
 # apply BPE
 for split in train valid test
 do
-    $subword_nmt/apply_bpe.py -c model/$SRC$TRG.bpe < $DATA/$split/$split.tc.$SRC > $DATA/$split/$split.bpe.$SRC
-    test -f $DATA/$split/$split.tc.$TRG || continue
-    $subword_nmt/apply_bpe.py -c model/$SRC$TRG.bpe < $DATA/$split/$split.tc.$TRG > $DATA/$split/$split.bpe.$TRG
+    $subword_nmt/apply_bpe.py -c model/$SRC$TRG.bpe < $DIR/truecased/$split.$SRC > $DIR/bpe/$split.$SRC
+    test -f $DIR/truecased/$split.$TRG || continue
+    $subword_nmt/apply_bpe.py -c model/$SRC$TRG.bpe < $DIR/truecased/$split.$TRG > $DIR/bpe/$split.$TRG
 done
