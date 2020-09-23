@@ -28,7 +28,7 @@ then
     exit 1
 fi
 
-if [ ! -e "$DATA/train/train.$SRC" ]
+if [ ! -e "$DATA" ]
 then
     ./scripts/download-files.sh
 fi
