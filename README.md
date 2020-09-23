@@ -17,7 +17,7 @@ For instance if everything is in `~/` and you are working on the MTNT dataset
 ```bash
 export MARIAN=$HOME/marian-dev/build
 export TOOLS=$HOME/marian-dev/examples/tools
-export DATA=$HOME/robust_bench/data/MTNT
+export DATA=$HOME/robust_bench/data
 ```
 
 or in a conda environement (see

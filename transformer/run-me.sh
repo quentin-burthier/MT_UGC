@@ -4,7 +4,6 @@
 src=en
 # suffix of target language files
 tgt=fr
-
 # MTNT and processed data paths
 mtnt=$DATA/MTNT
 dir=$mtnt/$src.$tgt
