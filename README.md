@@ -15,7 +15,18 @@ Please set `MARIAN`, `TOOLS` and `DATA` environment variables to the correct loc
 For instance if everything is in `~/` and you are working on the MTNT dataset
 
 ```bash
-export MARIAN=$HOME/marian/build
+export MARIAN=$HOME/marian-dev/build
 export TOOLS=$HOME/marian-dev/examples/tools
-export DATA=$HOME/data/MTNT
+export DATA=$HOME/robust_bench/data/MTNT
+```
+
+or in a conda environement (see
+[conda documentation](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#setting-environment-variables))
+
+```bash
+conda activate nmt
+conda env config vars set MARIAN=$HOME/marian-dev/build
+conda env config vars set TOOLS=$HOME/marian-dev/examples/tools
+conda env config vars set DATA=$HOME/robust_bench/data/MTNT
+conda activate nmt
 ```
