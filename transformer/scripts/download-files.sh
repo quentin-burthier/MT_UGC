@@ -1,4 +1,4 @@
-#!/bin/bash -v
+#!/bin/bash
 
 # MTNT data
 wget -nc -O $DATA/MTNT.1.1.tar.gz \

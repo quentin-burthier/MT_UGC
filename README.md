@@ -7,7 +7,10 @@ Code tested with
 - gcc 7.3.0
 - CUDA 9.2
 - marian-dev (commit [467b15e](https://github.com/marian-nmt/marian-dev/commit/467b15e2b94b7c7b25ceaee764f790d8faaeabf2))
-- Python 3.6 (langid 1.1.6)
+- Python 3.8 with packages
+  - sacrebleu 1.14.4
+  - sentencepiece 0.1.91
+  - langid 1.1.6
 
 ### Environment variables
 

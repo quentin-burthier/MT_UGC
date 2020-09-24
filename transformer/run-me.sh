@@ -1,4 +1,4 @@
-#!/bin/bash -v
+#!/bin/bash
 
 # suffix of source language files
 src=en
@@ -27,7 +27,7 @@ then
     exit 1
 fi
 
-if [ ! -e $TOOLS/moses-scripts ] || [ ! -e $TOOLS/subword-nmt ] || [ ! -e $TOOLS/sacreBLEU ]
+if [ ! -e $TOOLS/moses-scripts ] || [ ! -e $TOOLS/subword-nmt ]
 then
     echo "missing tools in $TOOLS, you need to download them first"
     exit 1
@@ -36,6 +36,7 @@ fi
 if [ ! -e "$mtnt" ]
 then
     ./scripts/download-files.sh
+    echo "Downloaded data\n"
 fi
 
 mkdir -p model
@@ -44,42 +45,28 @@ mkdir -p model
 if [ ! -e "$dir" ]
 then
     ./scripts/preprocess-data.sh
+    echo "Preprocessed data\n"
 fi
 
 # create common vocabulary
 if [ ! -e "model/vocab.$src$tgt.yml" ]
 then
     cat $dir/bpe/train.$src $dir/bpe/train.$tgt | $marian_vocab --max-size 36000 > model/vocab.$src$tgt.yml
+    echo "Created vocabulary\n"
 fi
 
 # train model
+output_dir=$dir/output_$(date +"%d.%m.%Y_%T")
+mkdir $output_dir
 if [ ! -e "model/model.npz" ]
 then
-    $marian_train \
-        --model model/model.npz --type transformer \
+    $marian_train -c config.yml \
         --train-sets $dir/bpe/train.$src $dir/bpe/train.$tgt \
-        --max-length 100 \
         --vocabs model/vocab.$src$tgt.yml model/vocab.$src$tgt.yml \
-        --mini-batch-fit -w 10000 --maxi-batch 1000 \
-        --early-stopping 10 --cost-type=ce-mean-words \
-        --valid-freq 5000 --save-freq 5000 --disp-freq 500 \
-        --valid-metrics ce-mean-words perplexity translation \
+        --valid-script-args $src $tgt \
         --valid-sets $dir/bpe/valid.$src $dir/bpe/valid.$tgt \
-        --valid-script-path "bash ./scripts/validate.sh" \
-        --valid-translation-output $dir/output/valid.$src --quiet-translation \
-        --valid-mini-batch 64 \
-        --beam-size 6 --normalize 0.6 \
-        --log model/train.log --valid-log model/valid.log \
-        --enc-depth 6 --dec-depth 6 \
-        --transformer-heads 8 \
-        --transformer-postprocess-emb d \
-        --transformer-postprocess dan \
-        --transformer-dropout 0.1 --label-smoothing 0.1 \
-        --learn-rate 0.0003 --lr-warmup 16000 --lr-decay-inv-sqrt 16000 --lr-report \
-        --optimizer-params 0.9 0.98 1e-09 --clip-norm 5 \
-        --tied-embeddings-all \
-        --devices $GPUS --sync-sgd --seed 1111 \
-        --exponential-smoothing
+        --valid-translation-output $output_dir/valid.$src \
+        --devices $GPUS
 fi
 
 # find best model on dev set
@@ -93,8 +80,9 @@ do
         | sed 's/\@\@ //g' \
         | $TOOLS/moses-scripts/scripts/recaser/detruecase.perl \
         | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl -l $tgt \
-        > $dir/output/$split.$tgt
+        > $output_dir/$split.$tgt
 done
 
 # calculate bleu scores on test sets
-LC_ALL=C.UTF-8 $TOOLS/sacreBLEU/sacrebleu.py -t wmt14 -l $src-$tgt < $dir/output/test.$tgt
+cat $output_dir/test.$tgt | sacrebleu $dir/splitted/test.$tgt
+# LC_ALL=C.UTF-8 sacrebleu -t wmt20/robust/set1 -l $src-$tgt < $output_dir/test.$tgt
