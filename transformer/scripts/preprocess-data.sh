@@ -1,4 +1,4 @@
-#!/bin/bash -v
+#!/bin/bash
 
 # suffix of source language files
 src=en
