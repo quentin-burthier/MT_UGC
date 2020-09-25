@@ -41,19 +41,19 @@ fi
 
 mkdir -p model
 
-# preprocess data
-if [ ! -e "$dir" ]
-then
-    ./scripts/preprocess-data.sh
-    echo "Preprocessed data\n"
-fi
+# # preprocess data
+# if [ ! -e "$dir" ]
+# then
+#     ./scripts/preprocess-data.sh
+#     echo "Preprocessed data\n"
+# fi
 
 # create common vocabulary
-if [ ! -e "model/vocab.$src$tgt.yml" ]
-then
-    cat $dir/bpe/train.$src $dir/bpe/train.$tgt | $marian_vocab --max-size 36000 > model/vocab.$src$tgt.yml
-    echo "Created vocabulary\n"
-fi
+# if [ ! -e "model/vocab.$src$tgt.yml" ]
+# then
+#     cat $dir/bpe/train.$src $dir/bpe/train.$tgt | $marian_vocab --max-size 36000 > model/vocab.$src$tgt.yml
+#     echo "Created vocabulary\n"
+# fi
 
 # train model
 output_dir=$dir/output_$(date +"%d.%m.%Y_%T")
@@ -61,10 +61,9 @@ mkdir $output_dir
 if [ ! -e "model/model.npz" ]
 then
     $marian_train -c config.yml \
-        --train-sets $dir/bpe/train.$src $dir/bpe/train.$tgt \
-        --vocabs model/vocab.$src$tgt.yml model/vocab.$src$tgt.yml \
-        --valid-script-args $src $tgt \
-        --valid-sets $dir/bpe/valid.$src $dir/bpe/valid.$tgt \
+        --train-sets $dir/splitted/train.$src $dir/splitted/train.$tgt \
+        --vocabs model/vocab.$src$tgt.spm model/vocab.$src$tgt.spm \
+        --valid-sets $dir/splitted/valid.$src $dir/splitted/valid.$tgt \
         --valid-translation-output $output_dir/valid.$src \
         --devices $GPUS
 fi
@@ -73,16 +72,19 @@ fi
 ITER=`cat model/valid.log | grep translation | sort -rg -k12,12 -t' ' | cut -f8 -d' ' | head -n1`
 
 # translate test sets
-for split in valid test
-do
-    cat $dir/$bpe/$split.$src \
-        | $marian_decoder -c model/model.npz.decoder.yml -m model/model.iter$ITER.npz -d $GPUS -b 12 -n -w 6000 \
-        | sed 's/\@\@ //g' \
-        | $TOOLS/moses-scripts/scripts/recaser/detruecase.perl \
-        | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl -l $tgt \
-        > $output_dir/$split.$tgt
-done
+# for split in valid test
+# do
+#     # cat $dir/bpe/$split.$src \
+#     #     | $marian_decoder -c model/model.npz.decoder.yml -m model/model.iter$ITER.npz -d $GPUS -b 12 -n -w 6000 \
+#     #     | sed 's/\@\@ //g' \
+#     #     | $TOOLS/moses-scripts/scripts/recaser/detruecase.perl \
+#     #     | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl -l $tgt \
+#     #     > $output_dir/$split.$tgt
+#     cat $dir/splitted/$split.$src \
+#         | $marian_decoder -c model/model.npz.best-bleu-detok.npz.decoder.yml -d $GPUS -b 6 -n0.6 \
+#         --mini-batch 64 --maxi-batch 100 --maxi-batch-sort src > $output_dir/$split.$tgt
+# done
 
-# calculate bleu scores on test sets
-cat $output_dir/test.$tgt | sacrebleu $dir/splitted/test.$tgt
-# LC_ALL=C.UTF-8 sacrebleu -t wmt20/robust/set1 -l $src-$tgt < $output_dir/test.$tgt
+# # calculate bleu scores on test sets
+# cat $output_dir/test.$tgt | sacrebleu $dir/splitted/test.$tgt
+# # LC_ALL=C.UTF-8 sacrebleu -t wmt20/robust/set1 -l $src-$tgt < $output_dir/test.$tgt
