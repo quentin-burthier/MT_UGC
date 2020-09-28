@@ -17,9 +17,6 @@ bpe_operations=32000
 # path to moses decoder: https://github.com/moses-smt/mosesdecoder
 mosesdecoder=$TOOLS/moses-scripts
 
-# path to subword segmentation scripts: https://github.com/rsennrich/subword-nmt
-subword_nmt=$TOOLS/subword-nmt
-
 mkdir $dir/splitted
 # Split tsv (adapted from the MTNT script)
 for split in train valid test
@@ -66,16 +63,4 @@ do
     test -f $dir/tokenized/$split.$tgt || continue
     $mosesdecoder/scripts/recaser/truecase.perl \
         -model model/tc.$tgt < $dir/tokenized/$split.$tgt > $dir/truecased/$split.$tgt
-done
-
-# train BPE
-cat $dir/truecased/train.$src $dir/truecased/train.$tgt | $subword_nmt/learn_bpe.py -s $bpe_operations > model/$src$tgt.bpe
-
-# apply BPE
-mkdir $dir/bpe
-for split in train valid test
-do
-    $subword_nmt/apply_bpe.py -c model/$src$tgt.bpe < $dir/truecased/$split.$src > $dir/bpe/$split.$src
-    test -f $dir/truecased/$split.$tgt || continue
-    $subword_nmt/apply_bpe.py -c model/$src$tgt.bpe < $dir/truecased/$split.$tgt > $dir/bpe/$split.$tgt
 done

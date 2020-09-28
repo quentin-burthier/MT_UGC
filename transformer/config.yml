@@ -11,6 +11,7 @@ transformer-dropout: 0.1
 beam-size: 6
 normalize: 0.6
 
+after-epochs: 10
 cost-type: ce-mean-words
 optimizer-params:
     - 0.9
@@ -36,10 +37,13 @@ valid-metrics:
     - translation
 valid-freq: 500
 valid-mini-batch: 64
+valid-script-path: "./scripts/validate.sh"
 
 early-stopping: 10
 save-freq: 500
 disp-freq: 500
+
+sentencepiece-options: "--split_by_whitespace=true"
 
 seed: 1111
 

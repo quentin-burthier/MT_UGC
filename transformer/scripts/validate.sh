@@ -12,5 +12,5 @@ cat $3 \
     | sed 's/\@\@ //g' \
     | $TOOLS/moses-scripts/scripts/recaser/detruecase.perl 2>/dev/null \
     | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl -l $tgt 2>/dev/null \
-    | $TOOLS/moses-scripts/scripts/generic/multi-bleu-detok.perl $dir/splitted/valid.$tgt \
+    | sacrebleu $dir/splitted/valid.$tgt \
     | sed -r 's/BLEU = ([0-9.]+),.*/\1/'
