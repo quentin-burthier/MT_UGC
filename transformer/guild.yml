@@ -1,0 +1,11 @@
+bash:
+    description: GuildAI test
+    exec: run-me.sh
+    config: config.yml
+    flags:
+      learn-rate: 0.0003
+    output-scalars:
+      - "n_lines"
+      - "ce-mean-words"
+      - "perplexity"
+      - "BLEU"
