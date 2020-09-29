@@ -1,11 +1,20 @@
 bash:
-    description: GuildAI test
-    exec: run-me.sh
-    config: config.yml
-    flags:
-      learn-rate: 0.0003
-    output-scalars:
-      - "n_lines"
-      - "ce-mean-words"
-      - "perplexity"
-      - "BLEU"
+  description: GuildAI test
+  exec: ./run-me.sh
+  sourcecode:
+    - 'scripts/'
+    - 'run-me.sh'
+    - 'config.yml'
+    - exclude: 'model/'
+  requires:
+    - config: config.yml
+    - file: 'run-me.sh'
+    - file: 'scripts/'
+  flags:
+    learn-rate: 0.0003
+  output-scalars:
+    - n_lines: 'n_lines (\n_lines)'
+    - voc_sz: 'vocab_size: (\voc_sz)'
+    - step: 'Starting epoch (\step)'
+    - ': (\key) (\value) :'
+  stoppable: true
