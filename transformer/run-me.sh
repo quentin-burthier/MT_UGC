@@ -8,9 +8,6 @@ tgt=fr
 mtnt=$DATA/MTNT
 dir=$mtnt/$src.$tgt
 
-marian_train=$MARIAN/marian
-marian_decoder=$MARIAN/marian-decoder
-
 # set chosen gpus
 GPUS=0
 if [ $# -ne 0 ]
@@ -24,12 +21,15 @@ then
     echo "marian is not installed in $MARIAN, you need to compile the toolkit first"
     exit 1
 fi
+marian_train=$MARIAN/marian
+marian_decoder=$MARIAN/marian-decoder
 
 if [ ! -e $TOOLS/moses-scripts ]
 then
     echo "missing Moses tools in $TOOLS, you need to download them first"
     exit 1
 fi
+moses_scripts=$TOOLS/moses-scripts/scripts
 
 if [ ! -e "$mtnt" ]
 then
@@ -43,7 +43,7 @@ mkdir -p model
 # preprocess data
 if [ ! -e "$dir" ]
 then
-    ./scripts/preprocess-data.sh
+    ./scripts/preprocess-data.sh $src $tgt
     echo "Preprocessing done"
     echo ""
 fi
@@ -51,31 +51,33 @@ fi
 echo "n_lines: $(wc -l $dir/splitted/train.$src | cut -d" " -f1)"
 
 # train model
+input_dir=$dir/truecased
 # output_dir=$dir/output_$(date +"%d.%m.%Y_%T")
 output_dir=$dir/output
 mkdir $output_dir
+mkdir "valid_output"
 if [ ! -e "model/model.npz" ]
 then
     $marian_train -c config.yml \
-        --train-sets $dir/truecased/train.$src $dir/truecased/train.$tgt \
+        --train-sets $input_dir/train.$src $input_dir/train.$tgt \
         --vocabs model/vocab.$src$tgt.spm model/vocab.$src$tgt.spm \
-        --valid-sets $dir/truecased/valid.$src $dir/truecased/valid.$tgt \
-        --valid-translation-output $output_dir/valid.$src \
+        --valid-sets $input_dir/valid.$src $input_dir/valid.$tgt \
+        --valid-translation-output "valid_output/epoch.{E}.$tgt" \
         --valid-script-args $src $tgt \
         --devices $GPUS
 fi
 
-# find best model on dev set
-ITER=`cat model/valid.log | grep translation | sort -rg -k12,12 -t' ' | cut -f8 -d' ' | head -n1`
-
 # translate test sets
 for split in valid test
 do
-    cat $dir/truecased/$split.$src \
-        | $marian_decoder -c model/model.npz.decoder.yml -m model/model.iter$ITER.npz -d $GPUS -b 12 -n -w 6000 \
+    cat $input_dir/$split.$src \
+        | $marian_decoder \
+            -c model/model.npz.decoder.yml \
+            -m model/model.npz.best-translation.npz \
+            -d $GPUS -b 12 -n -w 6000 \
         | sed 's/\@\@ //g' \
-        | $TOOLS/moses-scripts/scripts/recaser/detruecase.perl \
-        | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl -l $tgt \
+        | $moses_scripts/recaser/detruecase.perl \
+        | $moses_scripts/tokenizer/detokenizer.perl -l $tgt \
         > $output_dir/$split.$tgt
 done
 

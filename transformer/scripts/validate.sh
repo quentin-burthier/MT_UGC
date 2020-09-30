@@ -8,9 +8,10 @@ tgt=$2
 mtnt=$DATA/MTNT
 dir=$mtnt/$src.$tgt
 
+moses_scripts=$TOOLS/moses-scripts/scripts
+
 cat $3 \
     | sed 's/\@\@ //g' \
-    | $TOOLS/moses-scripts/scripts/recaser/detruecase.perl 2>/dev/null \
-    | $TOOLS/moses-scripts/scripts/tokenizer/detokenizer.perl -l $tgt 2>/dev/null \
-    | sacrebleu $dir/splitted/valid.$tgt \
-    | sed -r 's/BLEU = ([0-9.]+),.*/\1/'
+    | $moses_scripts/recaser/detruecase.perl 2>/dev/null \
+    | $moses_scripts/tokenizer/detokenizer.perl -l $tgt 2>/dev/null \
+    | sacrebleu --score-only $dir/splitted/valid.$tgt
