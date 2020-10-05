@@ -1,12 +1,15 @@
 #!/bin/bash
 
+# Ratio of training data
+ratio=.0.9
+
 # suffix of source language files
 src=en
 # suffix of target language files
 tgt=fr
 # MTNT and processed data paths
 mtnt=$DATA/MTNT
-dir=$mtnt/$src.$tgt
+dir=$mtnt/$src.$tgt$ratio
 
 # set chosen gpus
 GPUS=0
@@ -16,11 +19,6 @@ then
 fi
 echo Using GPUs: $GPUS
 
-if [ ! -e $marian_train ]
-then
-    echo "marian is not installed in $MARIAN, you need to compile the toolkit first"
-    exit 1
-fi
 marian_train=$MARIAN/marian
 marian_decoder=$MARIAN/marian-decoder
 
@@ -43,12 +41,16 @@ mkdir -p model
 # preprocess data
 if [ ! -e "$dir" ]
 then
-    ./scripts/preprocess-data.sh $src $tgt
+    ./scripts/preprocess-data.sh $src $tgt $ratio
     echo "Preprocessing done"
     echo ""
 fi
 
+echo "Starting epoch 0"
+n_lines='$(wc -l $dir/splitted/train.$src | cut -d" " -f1)'
 echo "n_lines: $(wc -l $dir/splitted/train.$src | cut -d" " -f1)"
+echo "ratio: $ratio"
+python tools/compare_lexicon.py dir=$mtnt/$src.$tgt$ratio/splitted/{train,test}.$src
 
 # train model
 input_dir=$dir/truecased
@@ -73,6 +75,7 @@ do
     cat $input_dir/$split.$src \
         | $marian_decoder \
             -c model/model.npz.decoder.yml \
+            --quiet-translation \
             -m model/model.npz.best-translation.npz \
             -d $GPUS -b 12 -n -w 6000 \
         | sed 's/\@\@ //g' \
@@ -82,5 +85,6 @@ do
 done
 
 # calculate bleu scores on test sets
+echo "Starting epoch 0"
 cat $output_dir/test.$tgt | sacrebleu $dir/splitted/test.$tgt
 # LC_ALL=C.UTF-8 sacrebleu -t wmt20/robust/set1 -l $src-$tgt < $output_dir/test.$tgt

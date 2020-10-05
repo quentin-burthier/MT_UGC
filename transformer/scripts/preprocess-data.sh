@@ -5,9 +5,16 @@ src=$1
 # suffix of target language files
 tgt=$2
 
+if [ -z "$3" ]
+then
+    ratio=""
+else
+    ratio=$3
+fi
+
 # MTNT and processed data paths
 mtnt=$DATA/MTNT
-dir=$mtnt/$src.$tgt
+dir=$mtnt/$src.$tgt$ratio
 
 mkdir $dir
 
@@ -19,7 +26,9 @@ moses_scripts=$TOOLS/moses-scripts/scripts
 
 mkdir $dir/splitted
 # Split tsv (adapted from the MTNT script)
-for split in train valid test
+cut -f2 $mtnt/train/train.$src-$tgt$ratio.tsv > $dir/splitted/train.$src
+cut -f3 $mtnt/train/train.$src-$tgt$ratio.tsv > $dir/splitted/train.$tgt
+for split in valid test
 do
     cut -f2 $mtnt/$split/$split.$src-$tgt.tsv > $dir/splitted/$split.$src
     cut -f3 $mtnt/$split/$split.$src-$tgt.tsv > $dir/splitted/$split.$tgt

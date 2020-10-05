@@ -11,7 +11,7 @@ transformer-dropout: 0.1
 beam-size: 6
 normalize: 0.6
 
-after-epochs: 0
+after-epochs: 100
 cost-type: ce-mean-words
 optimizer-params:
     - 0.9
