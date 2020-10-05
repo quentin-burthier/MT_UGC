@@ -5,16 +5,54 @@ bash:
     - 'scripts/'
     - 'run-me.sh'
     - 'config.yml'
-    - exclude: 'model/'
+    - exclude:
+      - 'model/'
+      - 'valid_output/'
   requires:
     - config: config.yml
     - file: 'run-me.sh'
     - file: 'scripts/'
+
   flags:
     learn-rate: 0.0003
+    type: transformer
+    enc-depth: 1
+    dec-depth: 1
+    transformer-heads: 8
+    transformer-postprocess-emb: d
+    transformer-postprocess: dan
+    transformer-dropout: 0.1
+    beam-size: 6
+    normalize: 0.6
+
+    after-epochs: 50
+    cost-type: ce-mean-words
+
+    learn-rate: 0.0003
+    exponential-smoothing: true
+    lr-warmup: 16000
+    lr-decay-inv-sqrt: 16000
+    lr-report: true
+    clip-norm: 5
+    label-smoothing: 0.1
+    tied-embeddings-all: true
+    sync-sgd: true
+    disp-freq: 500
+
+    max-length: 100
+    mini-batch-fit: true
+    maxi-batch: 10000
+
+    valid-freq: 1000
+    valid-mini-batch: 64
+
   output-scalars:
-    - n_lines: 'n_lines (\n_lines)'
-    - voc_sz: 'vocab_size: (\voc_sz)'
+    - nlines: 'n_lines: (\value)'
+    - BLEU: 'BLEU[\S+]* = (\value)'
     - step: 'Starting epoch (\step)'
+    - ': (\key) : (\value) :'
     - ': (\key) (\value) :'
+    - time: 'Time (\value)s'
+    - lr: 'L.r. (\value)'
+
   stoppable: true
