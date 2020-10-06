@@ -44,8 +44,9 @@ python $tools/compare_lexicon.py dir=$mtnt/$src.$tgt$ratio/splitted/{train,test}
 
 # train model
 input_dir=$dir/truecased
+# output_dir=$dir/output
+output_dir=$dir/output_$voc_sz
 # output_dir=$dir/output_$(date +"%d.%m.%Y_%T")
-output_dir=$dir/output
 mkdir $output_dir
 mkdir "valid_output"
 if [ ! -e "model/model.npz" ]
