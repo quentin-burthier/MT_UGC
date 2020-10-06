@@ -19,7 +19,7 @@ For instance if everything is in `~/` and you are working on the MTNT dataset
 
 ```bash
 export MARIAN=$HOME/marian-dev/build
-export TOOLS=$HOME/marian-dev/examples/tools
+export MOSES_SCRIPTS=$HOME/marian-dev/examples/tools/moses-scripts/scripts
 export DATA=$HOME/robust_bench/data
 ```
 
@@ -29,7 +29,7 @@ or in a conda environement (see
 ```bash
 conda activate nmt
 conda env config vars set MARIAN=$HOME/marian-dev/build
-conda env config vars set TOOLS=$HOME/marian-dev/examples/tools
+conda env config vars set MOSES_SCRIPTS=$HOME/marian-dev/examples/tools/moses-scripts/scripts
 conda env config vars set DATA=$HOME/robust_bench/data
 conda activate nmt
 ```

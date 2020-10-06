@@ -1,6 +1,6 @@
 bash:
   description: GuildAI test
-  exec: ./run-me.sh
+  exec: ./run-me.sh -s ${src} -t ${tgt} --gpus ${gpus} -v ${voc_sz} -r ${ratio}
   sourcecode:
     - 'scripts/'
     - 'run-me.sh'
@@ -9,11 +9,18 @@ bash:
       - 'model/'
       - 'valid_output/'
   requires:
-    - config: config.yml
+    - file: config.yml
     - file: 'run-me.sh'
     - file: 'scripts/'
+    - file: '../tools/'
 
   flags:
+    src: en
+    tgt: fr
+    voc_sz: 32000
+    ratio: null
+    gpus: 0
+
     learn-rate: 0.0003
     type: transformer
     enc-depth: 1

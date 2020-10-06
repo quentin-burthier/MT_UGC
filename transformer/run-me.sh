@@ -1,33 +1,23 @@
 #!/bin/bash
 
-# Ratio of training data
-ratio=.0.9
+if [ -e ../tools ]; then tools=../tools; elif [ -e tools ]; then tools=tools; fi
 
-# suffix of source language files
+source $tools/parse_cli.sh
+
+# Default CLI args
 src=en
-# suffix of target language files
 tgt=fr
-# MTNT and processed data paths
-mtnt=$DATA/MTNT
-dir=$mtnt/$src.$tgt$ratio
+ratio=""
+voc_sz=32000
 
-# set chosen gpus
-GPUS=0
-if [ $# -ne 0 ]
-then
-    GPUS=$@
-fi
-echo Using GPUs: $GPUS
+parse_cli $@
+
+# MTNT and processed data paths
+mtnt=$DATA/MTNT_reshuffled
+dir=$mtnt/$src.$tgt$ratio
 
 marian_train=$MARIAN/marian
 marian_decoder=$MARIAN/marian-decoder
-
-if [ ! -e $TOOLS/moses-scripts ]
-then
-    echo "missing Moses tools in $TOOLS, you need to download them first"
-    exit 1
-fi
-moses_scripts=$TOOLS/moses-scripts/scripts
 
 if [ ! -e "$mtnt" ]
 then
@@ -41,7 +31,7 @@ mkdir -p model
 # preprocess data
 if [ ! -e "$dir" ]
 then
-    ./scripts/preprocess-data.sh $src $tgt $ratio
+    ./scripts/preprocess-data.sh $src $tgt $mtnt $ratio
     echo "Preprocessing done"
     echo ""
 fi
@@ -49,8 +39,8 @@ fi
 echo "Starting epoch 0"
 n_lines='$(wc -l $dir/splitted/train.$src | cut -d" " -f1)'
 echo "n_lines: $(wc -l $dir/splitted/train.$src | cut -d" " -f1)"
-echo "ratio: $ratio"
-python tools/compare_lexicon.py dir=$mtnt/$src.$tgt$ratio/splitted/{train,test}.$src
+
+python $tools/compare_lexicon.py dir=$mtnt/$src.$tgt$ratio/splitted/{train,test}.$src
 
 # train model
 input_dir=$dir/truecased
@@ -63,10 +53,11 @@ then
     $marian_train -c config.yml \
         --train-sets $input_dir/train.$src $input_dir/train.$tgt \
         --vocabs model/vocab.$src$tgt.spm model/vocab.$src$tgt.spm \
+        --dim-vocabs $voc_sz $voc_sz \
         --valid-sets $input_dir/valid.$src $input_dir/valid.$tgt \
         --valid-translation-output "valid_output/epoch.{E}.$tgt" \
-        --valid-script-args $src $tgt \
-        --devices $GPUS
+        --valid-script-args $src $tgt $dir \
+        --devices $gpus
 fi
 
 # translate test sets
@@ -77,10 +68,10 @@ do
             -c model/model.npz.decoder.yml \
             --quiet-translation \
             -m model/model.npz.best-translation.npz \
-            -d $GPUS -b 12 -n -w 6000 \
+            -d $gpus -b 12 -n -w 6000 \
         | sed 's/\@\@ //g' \
-        | $moses_scripts/recaser/detruecase.perl \
-        | $moses_scripts/tokenizer/detokenizer.perl -l $tgt \
+        | $MOSES_SCRIPTS/recaser/detruecase.perl \
+        | $MOSES_SCRIPTS/tokenizer/detokenizer.perl -l $tgt \
         > $output_dir/$split.$tgt
 done
 
