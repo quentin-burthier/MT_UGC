@@ -8,7 +8,7 @@ tgt=$2
 # Processed data path
 dir=$3
 
-cat $3 \
+cat $4 \
     | sed 's/\@\@ //g' \
     | $MOSES_SCRIPTS/recaser/detruecase.perl 2>/dev/null \
     | $MOSES_SCRIPTS/tokenizer/detokenizer.perl -l $tgt 2>/dev/null \
