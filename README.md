@@ -14,13 +14,11 @@ Code tested with
 
 ### Environment variables
 
-Please set `MARIAN`, `TOOLS` and `DATA` environment variables to the correct locations.
-For instance if everything is in `~/` and you are working on the MTNT dataset
-
 ```bash
 export MARIAN=$HOME/marian-dev/build
 export MOSES_SCRIPTS=$HOME/marian-dev/examples/tools/moses-scripts/scripts
-export DATA=$HOME/robust_bench/data
+export TOOLS=$HOME/robust_bench/tools
+export DATA=/data/almanach/user/$(whoami)
 ```
 
 or in a conda environement (see
@@ -30,6 +28,8 @@ or in a conda environement (see
 conda activate nmt
 conda env config vars set MARIAN=$HOME/marian-dev/build
 conda env config vars set MOSES_SCRIPTS=$HOME/marian-dev/examples/tools/moses-scripts/scripts
-conda env config vars set DATA=$HOME/robust_bench/data
+conda env config vars set TOOLS=$HOME/robust_bench/tools
+conda env config vars set DATA=/data/almanach/user/$(whoami)
+
 conda activate nmt
 ```

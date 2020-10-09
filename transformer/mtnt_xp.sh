@@ -1,8 +1,6 @@
 #!/bin/bash
 
-if [ -e ../tools ]; then tools=../tools; elif [ -e tools ]; then tools=tools; fi
-
-source $tools/parse_cli.sh
+source $TOOLS/parse_cli.sh
 
 # Default CLI args
 src=en
@@ -40,7 +38,7 @@ echo "Starting epoch 0"
 n_lines='$(wc -l $dir/splitted/train.$src | cut -d" " -f1)'
 echo "n_lines: $(wc -l $dir/splitted/train.$src | cut -d" " -f1)"
 
-python $tools/compare_lexicon.py dir=$mtnt/$src.$tgt$ratio/splitted/{train,test}.$src
+python $TOOLS/compare_lexicon.py $dir/splitted/{train,test}.$src
 
 # train model
 input_dir=$dir/truecased
