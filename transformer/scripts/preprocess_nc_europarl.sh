@@ -2,12 +2,9 @@
 
 source $TOOLS/preprocess_fn.sh
 
-# suffix of source language files
-src=en
-# suffix of target language files
-tgt=$1
-
-dir=$DATA/europarl_nc.$src-$tgt
+src=$1
+tgt=$2
+dir=$3
 
 if [ ! -e "$dir/raw" ]
 then
