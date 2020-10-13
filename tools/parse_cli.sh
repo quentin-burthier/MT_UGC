@@ -1,7 +1,9 @@
 #!/bin/bash
+# Adapted from https://medium.com/@Drew_Stokes/bash-argument-parsing-54f3b81a6a8f
 
 function parse_cli () {
-PARAMS=""
+shuffle=true
+ratio="1.0"
 while (( "$#" )); do
   case "$1" in
     -s|--source)
@@ -28,39 +30,75 @@ while (( "$#" )); do
         shift 2
     else
         voc_sz=""
-        shift 1
+        shift
     fi
+    ;;
+    -d|--dataset)
+    if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        dataset=$2
+        shift 2
+    else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+    fi
+    ;;
+    --no-shuffle)
+        shuffle=false
+        shift
     ;;
     -r|--ratio)
     if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
-        ratio=.$2
+        ratio=$2
         shift 2
     else
-        ratio=""
-        shift 1
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+    fi
+    ;;
+    -m|--model)
+    if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        model_dir=$2
+        shift 2
+    else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+    fi
+    ;;
+    -o|--output-dir)
+    if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        output_dir=$2
+        shift 2
+    else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+    fi
+    ;;
+    -vo|--val-output-dir)
+    if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        val_output_dir=$2
+        shift 2
+    else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
     fi
     ;;
     --gpus)
-        if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
-            while [ -n "$2" ] && [ ${2:0:1} != "-" ]; do
-                gpus="$gpus $2"
-                shift 1
-            done
-        else
-        # no gpus
-        shift 1
+    if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        while [ -n "$2" ] && [ ${2:0:1} != "-" ]; do
+            gpus="$gpus $2"
+            shift
+        done
     fi
-      ;;
+    shift
+    ;;
     -*|--*=) # unsupported flags
         echo "Error: Unsupported flag $1" >&2
         exit 1
-        ;;
+    ;;
     *) # preserve positional arguments
-        PARAMS="$PARAMS $1"
+        echo "Warning: Flag $1 ignored."
         shift
-        ;;
+    ;;
   esac
 done
-# set positional arguments in their proper place
-eval set -- "$PARAMS"
 }

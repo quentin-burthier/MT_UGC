@@ -11,7 +11,7 @@ transformer-dropout: 0.1
 beam-size: 6
 normalize: 0.6
 
-after-epochs: 200
+after-epochs: 0
 cost-type: ce-mean-words
 optimizer-params:
     - 0.9
@@ -30,6 +30,7 @@ disp-freq: 500
 
 max-length: 100
 mini-batch-fit: true
+workspace: 10000
 maxi-batch: 10000
 
 valid-metrics:
@@ -37,8 +38,8 @@ valid-metrics:
     - ce-mean-words
     - perplexity
 keep-best: true
-valid-freq: 1000
-valid-mini-batch: 16
+valid-freq: 10000
+valid-mini-batch: 32
 valid-script-path: "bash ./scripts/validate.sh"
 
 early-stopping: 10
@@ -47,8 +48,8 @@ sentencepiece-options: "--split_by_whitespace=true"
 
 seed: 1111
 
-log: model/train.log
-valid-log: model/valid.log
+log: log/train.log
+valid-log: log/valid.log
 
 quiet: false
 quiet-translation: true

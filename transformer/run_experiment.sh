@@ -7,16 +7,42 @@ src=en
 tgt=fr
 voc_sz=32000
 
+model_dir=model
+
 parse_cli $@
 
 marian_train=$MARIAN/marian
 marian_decoder=$MARIAN/marian-decoder
 
-dir=$DATA/europarl_nc.$src-$tgt
+case $dataset in
+    MTNT)
+        if $shuffle; then
+            mtnt=$DATA/MTNT_reshuffled
+        else
+            mtnt=$DATA/MTNT
+        fi
+        dir=$mtnt/$src-$tgt.$ratio
+        preprocess_args="$src $tgt $dir $mtnt $ratio"
+    ;;
+    nc_europarl)
+        dir=$DATA/europarl_nc.$src-$tgt
+        dataset_args=$tgt
+        preprocess_args="$src $tgt $dir"
+    ;;
+    nce_small)
+        dir=$DATA/nce_small.$src-$tgt
+        dataset_args=$tgt
+        preprocess_args="$src $tgt $dir"
+    ;;
+esac
+formated_date=$(date +"%d.%m.%Y_%T")
+if [ ! "$output_dir" ]; then output_dir=$dir/output_$formated_date; fi
+if [ ! "$val_output_dir" ]; then val_output_dir=$dir/val_output_$formated_date; fi
+
 input_dir=$dir/preprocessed
 if [ ! -e "$input_dir" ]
 then
-    ./scripts/preprocess_nc_europarl.sh $tgt
+    ./scripts/preprocess_$dataset.sh $preprocess_args
     echo "Preprocessing done"
     echo ""
 fi
@@ -26,21 +52,13 @@ echo "n_lines: $(wc -l $dir/raw/train.$src | cut -d" " -f1)"
 python $TOOLS/compare_lexicons.py $dir/raw/{train,dev}.$src
 
 # train model
-# output_dir=$dir/output
-# output_dir=$dir/output_$voc_sz
-train_date=$(date +"%d.%m.%Y_%T")
-output_dir=$dir/output_$train_date
-valid_output_dir=$dir/valid_output_$train_date
-model_dir=model
-mkdir -p $output_dir
-mkdir -p $valid_output_dir
-mkdir -p $model_dir
 if [ ! -e "$model_dir/model.npz" ]
 then
+    mkdir -p $model_dir $val_output_dir
     $marian_train -c config.yml \
         --train-sets $input_dir/train.{$src,$tgt} \
         --valid-sets $input_dir/val.{$src,$tgt} \
-        --valid-translation-output "$valid_output_dir/epoch.{E}.$tgt" \
+        --valid-translation-output "$val_output_dir/epoch.{E}.$tgt" \
         --valid-script-args $tgt $dir/raw/val.$tgt \
         --vocabs $model_dir/vocab.$src$tgt.spm $model_dir/vocab.$src$tgt.spm \
         --dim-vocabs $voc_sz $voc_sz \
@@ -48,6 +66,7 @@ then
 fi
 
 # translate dev sets
+mkdir -p $output_dir
 for split in val dev
 do
     cat $input_dir/$split.$src \
@@ -55,7 +74,7 @@ do
             -c $model_dir/model.npz.decoder.yml \
             -m $model_dir/model.npz.best-translation.npz \
             -d $gpus -b 12 -n -w 6000 \
-            --quiet-translation \
+            --quiet-translation --quiet \
         | sed 's/\@\@ //g' \
         | $MOSES_SCRIPTS/recaser/detruecase.perl \
         | $MOSES_SCRIPTS/tokenizer/detokenizer.perl -l $tgt \

@@ -5,6 +5,8 @@ bash:
     - 'scripts/'
     - 'run-me.sh'
     - 'config.yml'
+    - 'model/train.log'
+    - 'model/val.log'
     - exclude:
       - 'model/'
       - 'valid_output/'
@@ -23,8 +25,8 @@ bash:
 
     learn-rate: 0.0003
     type: transformer
-    enc-depth: 1
-    dec-depth: 1
+    enc-depth: 6
+    dec-depth: 6
     transformer-heads: 8
     transformer-postprocess-emb: d
     transformer-postprocess: dan
@@ -55,11 +57,11 @@ bash:
 
   output-scalars:
     - nlines: 'n_lines: (\value)'
+    - oov: '(\value) % of oov tokens'
     - BLEU: 'BLEU[\S+]* = (\value)'
-    - step: 'Starting epoch (\step)'
+    - step: ': Up. (\step) :'
     - ': (\key) : (\value) :'
     - ': (\key) (\value) :'
-    - time: 'Time (\value)s'
     - lr: 'L.r. (\value)'
 
   stoppable: true
