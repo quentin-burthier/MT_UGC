@@ -1,5 +1,3 @@
-model: model/model.npz
-
 type: transformer
 enc-depth: 6
 dec-depth: 6
@@ -34,12 +32,12 @@ workspace: 10000
 maxi-batch: 10000
 
 valid-metrics:
+    - perplexity
     - translation
     - ce-mean-words
-    - perplexity
 keep-best: true
-valid-freq: 10000
-valid-mini-batch: 32
+valid-freq: 1000
+valid-mini-batch: 16
 valid-script-path: "bash ./scripts/validate.sh"
 
 early-stopping: 10

@@ -64,6 +64,6 @@ then
 fi
 
 mkdir -p $dir/preprocessed
-mkdir -p truecaser_mtnt
+mkdir -p $dir/truecaser
 
-preprocess_corpus $src $tgt $dir/raw $dir/preprocessed truecaser_mtnt/tc
+preprocess_corpus $src $tgt $dir/raw $dir/preprocessed $dir/truecaser/model

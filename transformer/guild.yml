@@ -1,29 +1,29 @@
 bash:
-  description: GuildAI test
-  exec: ./run-me.sh -s ${src} -t ${tgt} --gpus ${gpus} -v ${voc_sz} -r ${ratio}
+  description: Experiment
+  exec: ./run_experiment.sh -s ${src} -t ${tgt} -d ${dataset} --gpus ${gpus} -v ${voc_sz} -m ${model} -o output -vo val_output
   sourcecode:
     - 'scripts/'
-    - 'run-me.sh'
+    - 'run_experiment.sh'
+    - '../tools/'
     - 'config.yml'
-    - 'model/train.log'
-    - 'model/val.log'
     - exclude:
       - 'model/'
       - 'valid_output/'
   requires:
     - file: config.yml
-    - file: 'run-me.sh'
-    - file: 'scripts/'
+    - file: 'run_experiment.sh'
+    - file: 'scripts'
     - file: '../tools/'
 
   flags:
     src: en
     tgt: fr
+    dataset: "nce_small"
+    model: "model"
     voc_sz: 32000
-    ratio: null
+    ratio: 1.0
     gpus: 0
 
-    learn-rate: 0.0003
     type: transformer
     enc-depth: 6
     dec-depth: 6
@@ -31,12 +31,16 @@ bash:
     transformer-postprocess-emb: d
     transformer-postprocess: dan
     transformer-dropout: 0.1
+
     beam-size: 6
     normalize: 0.6
 
-    after-epochs: 50
+    after-epochs: 0
     cost-type: ce-mean-words
-
+    optimizer-params:
+      # - 0.9
+      # - 0.98
+      # - 1e-09
     learn-rate: 0.0003
     exponential-smoothing: true
     lr-warmup: 16000
@@ -52,8 +56,20 @@ bash:
     mini-batch-fit: true
     maxi-batch: 10000
 
+    valid-metrics:
+      - translation
+      # - ce-mean-words
+      # - perplexity
+    keep-best: true
     valid-freq: 1000
-    valid-mini-batch: 64
+    valid-mini-batch: 16
+    valid-script-path: "bash ./scripts/validate.sh"
+
+    early-stopping: 10
+
+    sentencepiece-options: "--split_by_whitespace=true"
+
+    seed: 1111
 
   output-scalars:
     - nlines: 'n_lines: (\value)'

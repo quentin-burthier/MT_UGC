@@ -31,6 +31,6 @@ then
 fi
 
 mkdir $dir/preprocessed
-mkdir model
+mkdir -p $dir/truecaser
 
-preprocess_corpus $src $tgt $dir/raw $dir/preprocessed truecaser/tc
+preprocess_corpus $src $tgt $dir/raw $dir/preprocessed $dir/truecaser/model

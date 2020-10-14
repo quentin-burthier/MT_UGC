@@ -19,7 +19,7 @@ def compare_lexicons(train_set: str, other_set: str) -> Tuple[int, int, float]:
     return n_oov, n_unique_oov, proportion_oov
 
 def count_oov(train_lexicon: Counter, new_lexicon: Counter,
-              n_printed_oov=10) -> Tuple[int, int]:
+              n_printed_oov=20) -> Tuple[int, int]:
     """Counts the number of out of train lexicon vocabulary tokens in the new_lexicon."""
     oov_tokens = [token for token in new_lexicon.keys()
                   if token not in train_lexicon]

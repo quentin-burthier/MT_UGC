@@ -62,6 +62,5 @@ function truecaser.fit() {
 
 function truecaser.transform() {
     local model=$1
-    
     $MOSES_SCRIPTS/recaser/truecase.perl -model $model
 }

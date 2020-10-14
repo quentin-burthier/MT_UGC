@@ -32,6 +32,7 @@ case $dataset in
     nce_small)
         dir=$DATA/nce_small.$src-$tgt
         dataset_args=$tgt
+        dataset=europarl_nc
         preprocess_args="$src $tgt $dir"
     ;;
 esac
@@ -54,8 +55,12 @@ python $TOOLS/compare_lexicons.py $dir/raw/{train,dev}.$src
 # train model
 if [ ! -e "$model_dir/model.npz" ]
 then
-    mkdir -p $model_dir $val_output_dir
-    $marian_train -c config.yml \
+    mkdir -p $model_dir
+    mkdir -p $val_output_dir
+    mkdir -p log
+    $marian_train \
+        -c config.yml \
+        -m $model_dir/model.npz \
         --train-sets $input_dir/train.{$src,$tgt} \
         --valid-sets $input_dir/val.{$src,$tgt} \
         --valid-translation-output "$val_output_dir/epoch.{E}.$tgt" \
@@ -84,3 +89,9 @@ done
 # calculate bleu scores on dev set
 echo ": Up. 0 :"
 cat $output_dir/dev.$tgt | sacrebleu $dir/raw/dev.$tgt
+
+lang=en
+train=europarl_nc.en-fr 
+# dev=$train
+dev=MTNT_reshuffled/en-fr.1.0
+python $TOOLS/compare_lexicons.py $DATA/$train/preprocessed/train.$lang $DATA/$dev/preprocessed/dev.$lang
