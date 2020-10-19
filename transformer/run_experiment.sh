@@ -24,13 +24,19 @@ case $dataset in
         dir=$mtnt/$src-$tgt.$ratio
         preprocess_args="$src $tgt $dir $mtnt $ratio"
     ;;
-    nc_europarl)
+    europarl_nc)
         dir=$DATA/europarl_nc.$src-$tgt
         dataset_args=$tgt
         preprocess_args="$src $tgt $dir"
     ;;
     nce_small)
         dir=$DATA/nce_small.$src-$tgt
+        dataset_args=$tgt
+        dataset=europarl_nc
+        preprocess_args="$src $tgt $dir"
+    ;;
+    OpenSubtitles)
+        dir=$DATA/OpenSubtitles.$src-$tgt
         dataset_args=$tgt
         dataset=europarl_nc
         preprocess_args="$src $tgt $dir"
@@ -50,7 +56,7 @@ fi
 
 echo ": Up. 0 :"
 echo "n_lines: $(wc -l $dir/raw/train.$src | cut -d" " -f1)"
-python $TOOLS/compare_lexicons.py $dir/raw/{train,dev}.$src
+# python $TOOLS/compare_lexicons.py $dir/raw/{train,dev}.$src
 
 # train model
 if [ ! -e "$model_dir/model.npz" ]

@@ -10,10 +10,7 @@ if [ ! -e "$dir/raw" ]
 then
     mkdir -p $dir
 
-    paste $DATA/europarl-v7/europarl-v7.$tgt-$src.{$src,$tgt} \
-        > $DATA/europarl-v7/europarl-v7.$src-$tgt.tsv
-
-    cat $DATA/{europarl-v7/europarl-v7,news-commentary/news-commentary-v15}.$src-$tgt.tsv \
+    paste $DATA/OpenSubtitles.$src-$tgt/OpenSubtitles.$src-$tgt.{$src,$tgt} \
         | shuf -o $dir/corpus.tsv
 
     head -4096 $dir/corpus.tsv > $dir/val.tsv

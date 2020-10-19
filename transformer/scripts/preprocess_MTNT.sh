@@ -66,4 +66,4 @@ fi
 mkdir -p $dir/preprocessed
 mkdir -p $dir/truecaser
 
-preprocess_corpus $src $tgt $dir/raw $dir/preprocessed $dir/truecaser/model
+preprocess_corpus $src $tgt $dir/{raw,preprocessed,truecaser/model}
