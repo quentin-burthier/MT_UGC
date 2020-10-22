@@ -1,6 +1,6 @@
 bash:
   description: Experiment
-  exec: ./run_experiment.sh -s ${src} -t ${tgt} -d ${dataset} --gpus ${gpus} -v ${voc_sz} -m ${model} -o output -vo val_output
+  exec: ./run_experiment.sh -s ${src} -t ${tgt} -d ${dataset} --gpus ${gpus} -v ${voc_sz} -m ${model} -btm ${bt_model} -o output -vo val_output
   sourcecode:
     - 'scripts/'
     - 'run_experiment.sh'
@@ -20,6 +20,7 @@ bash:
     tgt: fr
     dataset: "nce_small"
     model: "model"
+    bt_model: null
     voc_sz: 32000
     ratio: 1.0
     gpus: 0

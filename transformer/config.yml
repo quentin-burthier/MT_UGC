@@ -42,12 +42,14 @@ valid-script-path: "bash ./scripts/validate.sh"
 
 early-stopping: 10
 
-sentencepiece-options: "--split_by_whitespace=true"
+sentencepiece-options: "--model_type=bpe --split_by_whitespace=true"
 
 seed: 1111
 
 log: log/train.log
 valid-log: log/valid.log
+
+overwrite: true
 
 quiet: false
 quiet-translation: true
