@@ -58,6 +58,19 @@ function preprocess_monolingual() {
     # rm -r $output_dir/tokenized
 }
 
+function split_corpus() {
+    head -4096 $dir/corpus.tsv > $dir/val.tsv
+    sed -n '4097,8192p;8193q' $dir/corpus.tsv > $dir/dev.tsv
+    sed -n '8193,$p' $dir/corpus.tsv > $dir/train.tsv
+
+    mkdir $dir/raw
+    for split in train val dev
+    do
+        cut -f1 $dir/$split.tsv > $dir/raw/$split.$src
+        cut -f2 $dir/$split.tsv > $dir/raw/$split.$tgt
+    done
+}
+
 function normalize_tokenize() {
     local lang=$1
     $MOSES_SCRIPTS/tokenizer/normalize-punctuation.perl -l $lang \

@@ -20,7 +20,7 @@ set_dataset_args
 input_dir=$dir/preprocessed
 if [ ! -e "$input_dir" ]
 then
-    ./scripts/preprocess_$dataset.sh $preprocess_args
+    $HOME/robust_bench/preprocessing/$dataset.sh $preprocess_args
 fi
 
 echo ": Up. 0 :"
@@ -28,7 +28,7 @@ echo "n_lines: $(wc -l $dir/raw/train.$src | cut -d" " -f1)"
 # python $TOOLS/compare_lexicons.py $dir/raw/{train,dev}.$src
 
 # Back-translation: tgt -> src model is assumed to have been trained
-if [ ! -e "$input_dir/train.bt.$src" ]
+if $back_translate && [ ! -e "$input_dir/train.bt.$src" ]
 then
     if [ ! -e "$mono_dir/preprocessed/train.$tgt" ]
     then
@@ -70,7 +70,7 @@ then
         --valid-sets $input_dir/val.{$src,$tgt} \
         --valid-translation-output "$val_output_dir/epoch.{E}.$tgt" \
         --valid-script-args $tgt $dir/raw/val.$tgt \
-        --vocabs $model_dir/vocab.$src$tgt.spm $model_dir/vocab.$src$tgt.spm \
+        --vocabs $model_dir/vocab.$src$tgt.spm{,} \
         --dim-vocabs $voc_sz $voc_sz \
         --devices $gpus
 fi

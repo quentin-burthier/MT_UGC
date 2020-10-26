@@ -1,7 +1,7 @@
 #!/bin/bash
 # Adapted from https://medium.com/@Drew_Stokes/bash-argument-parsing-54f3b81a6a8f
 
-function parse_cli () {
+function parse_cli() {
 shuffle=true
 ratio="1.0"
 while (( "$#" )); do
@@ -126,23 +126,13 @@ case $dataset in
         mono_dir=$mtnt/monolingual
         preprocess_args="$src $tgt $dir $mtnt $ratio"
     ;;
-    europarl_nc)
+    NCE)
         dir=$DATA/europarl_nc.$src-$tgt
         preprocess_args="$src $tgt $dir"
     ;;
-    nce_small)
-        dir=$DATA/nce_small.$src-$tgt
-        dataset=europarl_nc
-        preprocess_args="$src $tgt $dir"
-    ;;
-    OpenSubtitles)
-        dir=$DATA/OpenSubtitles.en-fr
-        preprocess_args="$src $tgt $dir"
-    ;;
-    OpenSubtitles_small)
-        dir=$DATA/OpenSubtitles_small.$src-$tgt
-        dataset=OpenSubtitles
-        preprocess_args="$src $tgt $dir"
+    Europarl|News-Commentary|OpenSubtitles)
+        dir=$DATA/$dataset.$src-$tgt
+        preprocess_args="$src $tgt"
     ;;
 esac
 formated_date=$(date +"%d.%m.%Y_%T")
