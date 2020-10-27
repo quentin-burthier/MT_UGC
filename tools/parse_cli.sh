@@ -135,6 +135,10 @@ case $dataset in
         dir=$DATA/$dataset.$src-$tgt
         preprocess_args="$src $tgt"
     ;;
+    Crapbank)
+        dir=$DATA/Crapbank
+        preprocess_args="$DATA/OpenSubtitles.en-fr/truecaser/model"
+    ;;
 esac
 formated_date=$(date +"%d.%m.%Y_%T")
 if [ ! "$output_dir" ]; then output_dir=$dir/output_$formated_date; fi
