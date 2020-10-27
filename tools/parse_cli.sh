@@ -139,6 +139,9 @@ case $dataset in
         dir=$DATA/Crapbank
         preprocess_args="$DATA/OpenSubtitles.en-fr/truecaser/model"
     ;;
+    Foursquare)
+        dir=$DATA/Foursquare
+    ;;
 esac
 formated_date=$(date +"%d.%m.%Y_%T")
 if [ ! "$output_dir" ]; then output_dir=$dir/output_$formated_date; fi
