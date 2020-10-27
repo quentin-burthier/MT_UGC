@@ -124,6 +124,7 @@ case $dataset in
         fi
         dir=$mtnt/$src-$tgt.$ratio
         mono_dir=$mtnt/monolingual
+        bt_dir=$mtnt/back-translated
         preprocess_args="$src $tgt $dir $mtnt $ratio"
     ;;
     NCE)

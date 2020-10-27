@@ -32,7 +32,7 @@ if $back_translate && [ ! -e "$input_dir/train.bt.$src" ]
 then
     if [ ! -e "$mono_dir/preprocessed/train.$tgt" ]
     then
-        ./scripts/preprocess_${dataset}_monolingual.sh $tgt $mono_dir
+        $HOME/robust_bench/preprocessing/${dataset}_monolingual.sh $tgt $mono_dir
     fi
 
     if [ ! -e "$bt_dir/train.$src" ]
@@ -42,18 +42,16 @@ then
             -i $mono_dir/preprocessed/train.$tgt \
             -c $bt_model/model.npz.best-translation.npz.decoder.yml \
             -d $gpus -b 1 -n -w 10000 \
-            --quiet-translation --quiet \
             --max-length 100 --max-length-crop \
-            > $bt_dir/train.$src
+            -o $bt_dir/train.$src
     fi
 
     # awk '{print "<syn>" $0 }' $bt_dir/train.$src > $bt_dir/train.$src
     # awk '{print "<nat>" $0 }' $input_dir.$src > $input_dir.$src
-
-    cat $bt_dir/train.$src $input_dir/train.$src \
+    cat $bt_dir/train.$src $input_dir/train.$src{,} \
     > $input_dir/train.bt.$src
 
-    cat $mono_dir/preprocessed/train.$tgt $input_dir/train.$tgt \
+    cat $mono_dir/preprocessed/train.$tgt $input_dir/train.$tgt{,} \
     > $input_dir/train.bt.$tgt
 fi
 
