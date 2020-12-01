@@ -2,3 +2,6 @@
 OAR.*
 oar*
 translations/
+
+__pycache__/
+.mypy_cache/
