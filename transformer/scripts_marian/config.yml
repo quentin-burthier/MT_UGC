@@ -38,11 +38,9 @@ valid-metrics:
 keep-best: true
 valid-freq: 1000
 valid-mini-batch: 16
-valid-script-path: "bash ./scripts/validate.sh"
+valid-script-path: "bash ./scripts_marian/validate.sh"
 
 early-stopping: 10
-
-sentencepiece-options: "--model_type=bpe --split_by_whitespace=true"
 
 seed: 1111
 

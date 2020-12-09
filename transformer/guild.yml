@@ -1,27 +1,42 @@
 bash:
   description: Experiment
-  exec: ./run_experiment.sh -s ${src} -t ${tgt} -d ${dataset} --gpus ${gpus} -v ${voc_sz} -m ${model} -btm ${bt_model} -o output -vo val_output
+  exec: "./run_experiment.sh -f ${framework}
+    -s ${src} -t ${tgt} -d ${dataset}
+    -nws ${nwordssrc} -nwt ${nwordstgt}
+    -arch ${type} -m ${model}
+    -btm ${bt_model} --gpus ${gpus}
+    -o output -vo val_output"
   sourcecode:
-    - 'scripts/'
+    - 'scripts_marian/'
+    - 'scripts_fairseq/'
     - 'run_experiment.sh'
     - '../tools/'
-    - 'config.yml'
+    - '../convtransformer/'
     - exclude:
+      - 'log/'
       - 'model/'
       - 'valid_output/'
+      - 'OAR.std'
+      - 'OAR.*'
   requires:
-    - file: config.yml
+    - file: scripts_marian/config.yml
     - file: 'run_experiment.sh'
-    - file: 'scripts'
+    - file: 'scripts_marian'
+    - file: 'scripts_fairseq'
     - file: '../tools/'
+    - file: '../preprocessing/'
 
   flags:
+    framework: marian
+    arch: transformer
     src: en
     tgt: fr
+    tokenlevel: bpe
     dataset: "nce_small"
     model: "model"
     bt_model: null
-    voc_sz: 32000
+    nwordssrc: 32000
+    nwordstgt: 32000
     ratio: 1.0
     gpus: 0
 
@@ -67,8 +82,6 @@ bash:
     valid-script-path: "bash ./scripts/validate.sh"
 
     early-stopping: 10
-
-    sentencepiece-options: "--split_by_whitespace=true"
 
     seed: 1111
 

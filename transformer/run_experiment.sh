@@ -3,9 +3,13 @@
 source $TOOLS/parse_cli.sh  # parse_cli, set_dataset_args
 
 # Default CLI args
+framework=marian
+architecture=transformer
 src=en
 tgt=fr
-voc_sz=32000
+nwordssrc=32000
+nwordstgt=32000
+tokenlevel=sentencepiece
 
 model_dir=model
 back_translate=false
@@ -25,7 +29,6 @@ fi
 
 echo ": Up. 0 :"
 echo "n_lines: $(wc -l $dir/raw/train.$src | cut -d" " -f1)"
-# python $TOOLS/compare_lexicons.py $dir/raw/{train,dev}.$src
 
 # Back-translation: tgt -> src model is assumed to have been trained
 if $back_translate && [ ! -e "$input_dir/train.bt.$src" ]
@@ -37,13 +40,7 @@ then
 
     if [ ! -e "$bt_dir/train.$src" ]
     then
-        mkdir -p $bt_dir
-        $marian_decoder \
-            -i $mono_dir/preprocessed/train.$tgt \
-            -c $bt_model/model.npz.best-translation.npz.decoder.yml \
-            -d $gpus -b 1 -n -w 10000 \
-            --max-length 100 --max-length-crop \
-            -o $bt_dir/train.$src
+        ./scripts_$framework/backtranslate.sh
     fi
 
     # awk '{print "<syn>" $0 }' $bt_dir/train.$src > $bt_dir/train.$src
@@ -55,38 +52,42 @@ then
     > $input_dir/train.bt.$tgt
 fi
 
-# train model
-if [ ! -e "$model_dir/model.npz" ]
+mkdir -p $model_dir
+
+bpe_dir=$dir/bpe.$nwordssrc.$nwordstgt
+if [ ! -e "$bpe_dir/train.$src" ]
 then
-    mkdir -p $model_dir
-    mkdir -p $val_output_dir
-    mkdir -p log
-    $marian_train \
-        -c config.yml \
-        -m $model_dir/model.npz \
-        --train-sets $input_dir/train.$bt{$src,$tgt} \
-        --valid-sets $input_dir/val.{$src,$tgt} \
-        --valid-translation-output "$val_output_dir/epoch.{E}.$tgt" \
-        --valid-script-args $tgt $dir/raw/val.$tgt \
-        --vocabs $model_dir/vocab.$src$tgt.spm{,} \
-        --dim-vocabs $voc_sz $voc_sz \
-        --devices $gpus
+    if [ ! -e "$model_dir/spm.$src.model" ]
+    then
+        python $TOOLS/spm/train.py --input=$input_dir/train.$src \
+            --model_prefix $model_dir/spm.$src \
+            --vocab_size $nwordssrc \
+            --character_coverage 1.0 \
+            --model_type $tokenlevel
+
+        python $TOOLS/spm/train.py --input=$input_dir/train.$tgt \
+            --model_prefix=$model_dir/spm.$tgt \
+            --vocab_size=$nwordstgt \
+            --character_coverage=1.0 \
+            --model_type=$tokenlevel
+    fi
+
+    mkdir -p $bpe_dir
+    for split in train val
+    do
+        for lang in $src $tgt
+        do
+            python $TOOLS/spm/encode.py $input_dir/$split.$lang \
+                --model=$model_dir/spm.$lang.model --output_format=piece \
+            > $bpe_dir/$split.$lang 
+        done
+    done
 fi
 
-# translate dev sets
 mkdir -p $output_dir
-for split in dev
-do
-    $marian_decoder \
-        -i $input_dir/$split.$src \
-        -c $model_dir/model.npz.decoder.yml \
-        -d $gpus -b 12 -n -w 6000 \
-        --quiet-translation --quiet \
-    | sed 's/\@\@ //g' \
-    | $MOSES_SCRIPTS/recaser/detruecase.perl \
-    | $MOSES_SCRIPTS/tokenizer/detokenizer.perl -l $tgt \
-    > $output_dir/$split.$tgt
-done
+
+./scripts_$framework/train_generate.sh $gpus $src $tgt $nwordssrc $nwordstgt \
+    $input_dir $bpe_dir $output_dir $model_dir $architecture $bt
 
 # calculate bleu scores on dev set
 echo ": Up. 0 :"

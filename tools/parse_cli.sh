@@ -6,6 +6,24 @@ shuffle=true
 ratio="1.0"
 while (( "$#" )); do
   case "$1" in
+    -f|--framework)
+    if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        framework=$2
+        shift 2
+    else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+    fi
+    ;;
+    -arch|--architecture)
+    if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        architecture=$2
+        shift 2
+    else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+    fi
+    ;;
     -s|--source)
     if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
         src=$2
@@ -24,13 +42,31 @@ while (( "$#" )); do
         exit 1
     fi
     ;;
-    -v|--voc_sz)
+    --tokenlevel)
     if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
-        voc_sz=$2
+        tokenlevel=$2
         shift 2
     else
-        voc_sz=""
-        shift
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+    fi
+    ;;
+    -nws|--nwordssrc)
+    if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        nwordssrc=$2
+        shift 2
+    else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+    fi
+    ;;
+    -nwt|--nwordstgt)
+    if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        nwordstgt=$2
+        shift 2
+    else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
     fi
     ;;
     -d|--dataset)
