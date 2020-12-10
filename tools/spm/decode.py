@@ -10,7 +10,8 @@ def main():
     processor.LoadFromFile(args.model)
 
     for line in sys.stdin:
-        sys.stdout.write(processor.Decode(line))
+        sys.stdout.write(processor.Decode(line.split()))
+        sys.stdout.write("\n")
 
 def parse_cli():
     parser = argparse.ArgumentParser()

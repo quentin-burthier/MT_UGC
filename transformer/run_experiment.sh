@@ -9,7 +9,7 @@ src=en
 tgt=fr
 nwordssrc=32000
 nwordstgt=32000
-tokenlevel=sentencepiece
+tokenlevel=bpe
 
 model_dir=model
 back_translate=false
@@ -54,41 +54,15 @@ fi
 
 mkdir -p $model_dir
 
-bpe_dir=$dir/bpe.$nwordssrc.$nwordstgt
-if [ ! -e "$bpe_dir/train.$src" ]
-then
-    if [ ! -e "$model_dir/spm.$src.model" ]
-    then
-        python $TOOLS/spm/train.py --input=$input_dir/train.$src \
-            --model_prefix $model_dir/spm.$src \
-            --vocab_size $nwordssrc \
-            --character_coverage 1.0 \
-            --model_type $tokenlevel
+source spm_train_encode.sh
+spm_train
+spm_encode_train_val
 
-        python $TOOLS/spm/train.py --input=$input_dir/train.$tgt \
-            --model_prefix=$model_dir/spm.$tgt \
-            --vocab_size=$nwordstgt \
-            --character_coverage=1.0 \
-            --model_type=$tokenlevel
-    fi
-
-    mkdir -p $bpe_dir
-    for split in train val
-    do
-        for lang in $src $tgt
-        do
-            python $TOOLS/spm/encode.py $input_dir/$split.$lang \
-                --model=$model_dir/spm.$lang.model --output_format=piece \
-            > $bpe_dir/$split.$lang 
-        done
-    done
-fi
-
-mkdir -p $output_dir
-
-./scripts_$framework/train_generate.sh $gpus $src $tgt $nwordssrc $nwordstgt \
-    $input_dir $bpe_dir $output_dir $model_dir $architecture $bt
+source ./scripts_$framework/train_generate.sh
+train
+translate_dev
 
 # calculate bleu scores on dev set
 echo ": Up. 0 :"
+echo $output_dir/dev.$tgt
 cat $output_dir/dev.$tgt | sacrebleu $dir/raw/dev.$tgt

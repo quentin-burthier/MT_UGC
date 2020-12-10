@@ -2,6 +2,7 @@
 # Adapted from https://medium.com/@Drew_Stokes/bash-argument-parsing-54f3b81a6a8f
 
 function parse_cli() {
+joint_dictionary=false
 shuffle=true
 ratio="1.0"
 while (( "$#" )); do
@@ -77,6 +78,10 @@ while (( "$#" )); do
         echo "Error: Argument for $1 is missing" >&2
         exit 1
     fi
+    ;;
+    --joint-dictionary)
+        joint_dictionary=true
+        shift
     ;;
     --no-shuffle)
         shuffle=false
