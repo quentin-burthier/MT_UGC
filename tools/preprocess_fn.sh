@@ -74,7 +74,7 @@ function split_corpus() {
 function normalize_tokenize() {
     local lang=$1
     $MOSES_SCRIPTS/tokenizer/normalize-punctuation.perl -l $lang \
-    | $MOSES_SCRIPTS/tokenizer/tokenizer.perl -a -l $lang
+    | $MOSES_SCRIPTS/tokenizer/tokenizer.perl -no-escape -a -l $lang
 }
 
 function clean_corpus() {
