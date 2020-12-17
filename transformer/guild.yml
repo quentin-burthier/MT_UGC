@@ -2,13 +2,15 @@ bash:
   description: Experiment
   exec: "./run_experiment.sh -f ${framework}
     -s ${src} -t ${tgt} -d ${dataset}
+    --joint-dictionary
     -nws ${nwordssrc} -nwt ${nwordstgt}
-    -arch ${type} -m ${model}
+    -arch ${arch} -m ${model}
     -btm ${bt_model} --gpus ${gpus}
     -o output -vo val_output"
   sourcecode:
     - 'scripts_marian/'
     - 'scripts_fairseq/'
+    - 'spm_train_encode.sh'
     - 'run_experiment.sh'
     - '../tools/'
     - '../convtransformer/'
@@ -19,8 +21,8 @@ bash:
       - 'OAR.std'
       - 'OAR.*'
   requires:
-    - file: scripts_marian/config.yml
     - file: 'run_experiment.sh'
+    - file: 'spm_train_encode.sh'
     - file: 'scripts_marian'
     - file: 'scripts_fairseq'
     - file: '../tools/'
@@ -40,7 +42,6 @@ bash:
     ratio: 1.0
     gpus: 0
 
-    type: transformer
     enc-depth: 6
     dec-depth: 6
     transformer-heads: 8
