@@ -10,7 +10,6 @@ function train() {
         --validpref $bpe_dir/val \
         --bpe sentencepiece \
         --joined-dictionary \
-        --dataset-impl raw \
         --workers $(nproc)
     fi
 
@@ -26,8 +25,7 @@ function train() {
         --warmup-init-lr 1e-07 --warmup-updates 16000 \
         --patience 10 \
         --clip-norm 5 \
-        --max-tokens 6000 \
-        --dataset-impl raw \
+        --max-tokens 4000 \
         --user-dir $HOME/robust_bench/convtransformer \
         --save-dir $model_dir \
         --no-epoch-checkpoints \
@@ -49,7 +47,7 @@ function translate_dev() {
         --buffer-size 2000 --batch-size 128 \
         --batch-size 128 \
         --beam 6 \
-        --dataset-impl raw \
+        --user-dir $HOME/robust_bench/convtransformer \
     > $output_dir/dev.$tgt.temp
 
     grep ^H $output_dir/dev.$tgt.temp | cut -f3 \
