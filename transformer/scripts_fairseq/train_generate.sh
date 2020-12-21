@@ -1,20 +1,22 @@
 #!/bin/bash
 
 function train() {
-    bin_dir=$bpe_dir/bin
-    if [ ! -e "$bin_dir" ]
-    then
-        fairseq-preprocess -s $src -t $tgt \
-        --destdir $bin_dir \
-        --trainpref $bpe_dir/train$bt \
-        --validpref $bpe_dir/val \
-        --bpe sentencepiece \
-        --joined-dictionary \
-        --workers $(nproc)
-    fi
-
     if [ ! -e "$model_dir/checkpoint_best.pt" ]
     then
+        bin_dir=$bpe_dir/bin
+        if [ ! -e "$bin_dir" ]
+        then
+            fairseq-preprocess -s $src -t $tgt \
+            --destdir $bin_dir \
+            --trainpref $bpe_dir/train$bt \
+            --validpref $bpe_dir/val \
+            --bpe sentencepiece \
+            --joined-dictionary \
+            --workers $(nproc)
+
+            ln -s $bin_dir $model_dir/bin
+        fi
+
         fairseq-train $bin_dir \
         --arch $architecture \
         --criterion label_smoothed_cross_entropy \
@@ -41,11 +43,12 @@ function translate_dev() {
     python $TOOLS/spm/encode.py $input_dir/dev.$src \
         --model=$spm_src_model \
         --output_format=piece \
-    | fairseq-interactive $bin_dir \
+    | cut -d" " -f 1-1022 \
+    | fairseq-interactive $model_dir/bin \
         -s $src -t $tgt \
         --path $model_dir/checkpoint_best.pt \
-        --buffer-size 2000 --batch-size 128 \
-        --batch-size 128 \
+        --buffer-size 2000 \
+        --batch-size 32 \
         --beam 6 \
         --user-dir $HOME/robust_bench/convtransformer \
     > $output_dir/dev.$tgt.temp

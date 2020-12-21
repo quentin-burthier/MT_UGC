@@ -22,7 +22,7 @@ marian_decoder=$MARIAN/marian-decoder
 set_dataset_args
 
 input_dir=$dir/preprocessed
-if [ ! -e "$input_dir" ]
+if [ ! -e "$input_dir/dev.$tgt" ]
 then
     $HOME/robust_bench/preprocessing/$dataset.sh $preprocess_args
 fi
@@ -64,5 +64,4 @@ translate_dev
 
 # calculate bleu scores on dev set
 echo ": Up. 0 :"
-echo $output_dir/dev.$tgt
 cat $output_dir/dev.$tgt | sacrebleu $dir/raw/dev.$tgt
