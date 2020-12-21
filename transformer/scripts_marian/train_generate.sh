@@ -23,7 +23,7 @@ function train() {
             --train-sets $bpe_dir/train.$bt{$src,$tgt} \
             --valid-sets $bpe_dir/val.{$src,$tgt} \
             --valid-translation-output "$val_output_dir/epoch.{E}.$tgt" \
-            --valid-script-args $tgt $dir/raw/val.$tgt \
+            --valid-script-args $tgt $dir/raw/val.$tgt $spm_tgt_model \
             --vocabs $model_dir/vocab{,}.yml \
             --devices $gpus
     fi
