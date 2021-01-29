@@ -4,6 +4,7 @@
 function parse_cli() {
 joint_dictionary=false
 shuffle=true
+back_translate=false
 ratio="1.0"
 while (( "$#" )); do
   case "$1" in
@@ -176,12 +177,20 @@ case $dataset in
         dir=$DATA/$dataset.$src-$tgt
         preprocess_args="$src $tgt"
     ;;
+    Europarl_small|OpenSubtitles_small)
+        dir=$DATA/$dataset.$src-$tgt
+        preprocess_args="$src $tgt _small"
+    ;;
     Crapbank)
         dir=$DATA/Crapbank
         preprocess_args="$DATA/OpenSubtitles.en-fr/truecaser/model"
     ;;
     Foursquare)
         dir=$DATA/Foursquare
+    ;;
+    *)
+        echo "Error: Unsupported flag $1" >&2
+        exit 1
     ;;
 esac
 formated_date=$(date +"%d.%m.%Y_%T")

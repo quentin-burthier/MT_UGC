@@ -1,18 +1,16 @@
 #!/bin/bash
 
-marian_vocab=$MARIAN/marian-vocab
+# marian_vocab=$MARIAN/marian-vocab
 marian_train=$MARIAN/marian
 marian_decoder=$MARIAN/marian-decoder
 
 function train() {
-    if [ ! -e "$model_dir/vocabs.yml" ]
+    # --sentencepiece-options "--model_type $tokenlevel" may need single quotes
+    if [ $tokenlevel != "char" ]
     then
-        cat $bpe_dir/train.$bt{$src,$tgt}* \
-        | $marian_vocab \
-        > $model_dir/vocabs.yml
+        dim_vocabs="--dim-vocabs $nwordssrc $nwordstgt"
     fi
 
-    # train model
     if [ ! -e "$model_dir/model.npz" ]
     then
         mkdir -p $val_output_dir
@@ -20,11 +18,12 @@ function train() {
         $marian_train \
             -c scripts_marian/config.yml \
             -m $model_dir/model.npz \
-            --train-sets $bpe_dir/train.$bt{$src,$tgt} \
-            --valid-sets $bpe_dir/val.{$src,$tgt} \
+            --train-sets $input_dir/train.$bt{$src,$tgt} \
+            --valid-sets $input_dir/val.{$src,$tgt} \
             --valid-translation-output "$val_output_dir/epoch.{E}.$tgt" \
             --valid-script-args $tgt $dir/raw/val.$tgt $spm_tgt_model \
-            --vocabs $model_dir/vocab{,}.yml \
+            --vocabs $model_dir/vocab.$src-$tgt.spm{,} \
+            --sentencepiece-options "--model_type $tokenlevel" $dim_vocabs \
             --devices $gpus
     fi
 }

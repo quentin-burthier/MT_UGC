@@ -3,10 +3,11 @@ bash:
   exec: "./run_experiment.sh -f ${framework}
     -s ${src} -t ${tgt} -d ${dataset}
     --joint-dictionary
+    --tokenlevel ${tokenlevel}
     -nws ${nwordssrc} -nwt ${nwordstgt}
-    -arch ${arch} -m ${model}
+    -arch ${arch} -m ${model} -ckpt ${checkpoint}
     -btm ${bt_model} --gpus ${gpus}
-    -o output -vo val_output"
+    -o ${outputdir} -vo val_output"
   sourcecode:
     - 'scripts_marian/'
     - 'scripts_fairseq/'
@@ -36,11 +37,13 @@ bash:
     tokenlevel: bpe
     dataset: "nce_small"
     model: "model"
+    checkpoint: "checkpoint_best"
     bt_model: null
     nwordssrc: 32000
     nwordstgt: 32000
     ratio: 1.0
     gpus: 0
+    outputdir: "output"
 
     enc-depth: 6
     dec-depth: 6

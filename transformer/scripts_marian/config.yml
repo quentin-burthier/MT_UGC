@@ -28,7 +28,7 @@ disp-freq: 500
 
 max-length: 100
 mini-batch-fit: true
-workspace: 10000
+workspace: 8000
 maxi-batch: 10000
 
 valid-metrics:

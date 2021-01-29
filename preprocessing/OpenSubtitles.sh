@@ -2,6 +2,8 @@
 
 source $TOOLS/preprocess_fn.sh
 
+small=$3
+
 if [ $1 \< $2 ]
 then
     src=$1
@@ -9,20 +11,25 @@ then
 else
     src=$2
     tgt=$1
-    ln -s $DATA/OpenSubtitles.{$src-$tgt,$tgt-$src}
+    ln -s $DATA/OpenSubtitles$small.{$src-$tgt,$tgt-$src}
 fi
-dir=$DATA/OpenSubtitles.$src-$tgt
+dir=$DATA/OpenSubtitles$small.$src-$tgt
 
 if [ ! -e "$dir/raw" ]
 then
-    mkdir -p $dir
+    if [ ! -n "$3" ]
+    then
+        mkdir -p $dir
 
-    paste $DATA/OpenSubtitles.$src-$tgt/OpenSubtitles.$src-$tgt.{$src,$tgt} \
-    | shuf -o $dir/corpus.tsv
+        paste $DATA/OpenSubtitles.$src-$tgt/OpenSubtitles.$src-$tgt.{$src,$tgt} \
+        | shuf -o $dir/corpus.tsv
 
-    split_corpus
+        split_corpus
 
-    rm $dir/*.tsv
+        rm $dir/*.tsv
+    else
+        $TOOLS/subsample.sh $src $tgt $DATA/{News-Commentary,OpenSubtitles{,_small}}.$src-$tgt/raw
+    fi
 fi
 
 if [ ! -e "$dir/preprocessed" ]

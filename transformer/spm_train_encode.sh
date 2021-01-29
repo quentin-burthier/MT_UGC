@@ -3,7 +3,13 @@
 function spm_train() {
     if $joint_dictionary
     then
-        bpe_dir=$dir/bpe.$nwordssrc
+        if [ $tokenlevel == "char" ]
+        then
+            bpe_dir=$dir/$tokenlevel
+        else
+            bpe_dir=$dir/$tokenlevel.$nwordssrc
+        fi
+
         if [ ! -e "$model_dir/spm.$src-$tgt.model" ]
         then
             cat $input_dir/train.{$src,$tgt} \
@@ -16,13 +22,13 @@ function spm_train() {
                 --vocab_size $nwordssrc \
                 --character_coverage 1.0 \
                 --model_type $tokenlevel
-            
+
             # rm $input_dir/train.$src-$tgt
         fi
         spm_src_model=$model_dir/spm.$src-$tgt.model
         spm_tgt_model=$model_dir/spm.$src-$tgt.model
     else
-        bpe_dir=$dir/bpe.$nwordssrc.$nwordstgt
+        bpe_dir=$dir/$tokenlevel.$nwordssrc.$nwordstgt
         if [ ! -e "$model_dir/spm.$src.model" ]
         then
             python $TOOLS/spm/train.py \

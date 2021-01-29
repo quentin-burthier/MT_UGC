@@ -3,16 +3,13 @@
 source $TOOLS/parse_cli.sh  # parse_cli, set_dataset_args
 
 # Default CLI args
-framework=marian
-architecture=transformer
-src=en
-tgt=fr
-nwordssrc=32000
-nwordstgt=32000
-tokenlevel=bpe
-
-model_dir=model
-back_translate=false
+# framework=framework
+# architecture=transformer
+# src=en
+# tgt=fr
+# nwordssrc=32000
+# nwordstgt=32000
+# tokenlevel=bpe
 
 parse_cli $@
 
@@ -26,9 +23,6 @@ if [ ! -e "$input_dir/dev.$tgt" ]
 then
     $HOME/robust_bench/preprocessing/$dataset.sh $preprocess_args
 fi
-
-echo ": Up. 0 :"
-echo "n_lines: $(wc -l $dir/raw/train.$src | cut -d" " -f1)"
 
 # Back-translation: tgt -> src model is assumed to have been trained
 if $back_translate && [ ! -e "$input_dir/train.bt.$src" ]

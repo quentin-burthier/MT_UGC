@@ -5,10 +5,18 @@ import sentencepiece as spm
 
 def main():
     args = parse_cli()
-    spm.SentencePieceTrainer.Train(
-        input=args.input, model_prefix=args.model_prefix,
-        vocab_size=args.vocab_size, model_type=args.model_type
-    )
+    if args.model_type == "char":
+        spm.SentencePieceTrainer.Train(
+            input=args.input, model_prefix=args.model_prefix,
+            model_type=args.model_type,
+            input_sentence_size=1_000_000, shuffle_input_sentence=True
+        )
+    else:
+        spm.SentencePieceTrainer.Train(
+            input=args.input, model_prefix=args.model_prefix,
+            model_type=args.model_type, vocab_size=args.vocab_size,
+            input_sentence_size=1_000_000, shuffle_input_sentence=True
+        )
 
 def parse_cli():
     parser = argparse.ArgumentParser()

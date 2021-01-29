@@ -8,8 +8,11 @@ from collections import Counter
 from random import sample
 import pandas as pd
 
-def oov_grid(src: str = "en", tgt: str = "fr", to_latex=False) -> pd.DataFrame:
+def oov_grid(src="fr", tgt="en", src_side=True, to_latex=False) -> pd.DataFrame:
     """Prints the OOV table."""
+
+    side = src if src_side else tgt
+
     train_sets = [
         ("Europarl", f"Europarl.{src}-{tgt}"),
         ("Foursquare", "Foursquare"),
@@ -24,11 +27,11 @@ def oov_grid(src: str = "en", tgt: str = "fr", to_latex=False) -> pd.DataFrame:
     dev_sets = list(itertools.chain(train_sets, dev_only_sets))
 
     train_lexicons = {train_set: build_vocab(join(os.environ["DATA"], train_path,
-                                             "preprocessed", f"train.{src}"))
+                                             "preprocessed", f"train.{side}"))
                       for train_set, train_path in train_sets}
 
     dev_lexicons = {dev_set: build_vocab(join(os.environ["DATA"], dev_path,
-                                            "preprocessed", f"dev.{src}"))
+                                            "preprocessed", f"dev.{side}"))
                     for dev_set, dev_path in dev_sets}
 
     df = oov_grid_dataframe(train_lexicons, dev_lexicons)
@@ -111,4 +114,4 @@ if __name__ == "__main__":
     if len(sys.argv) == 3:
         compare_lexicons(sys.argv[1], sys.argv[2], 200)
     else:
-        oov_grid()
+        oov_grid(src_side=True, to_latex=True)

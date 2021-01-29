@@ -1,21 +1,34 @@
 #!/bin/bash
 
 function train() {
-    if [ ! -e "$model_dir/checkpoint_best.pt" ]
+    if [ ! -e "$model_dir/checkpoints/checkpoint_best.pt" ]
     then
         bin_dir=$bpe_dir/bin
-        if [ ! -e "$bin_dir" ]
+        if [ ! -e "$bin_dir/dict.$src.txt" ]
         then
+            # echo "KENOBI"
+            # spm_voc_sz=$(wc -l $model_dir/spm.$src-$tgt.vocab | cut -d" " -f 1)
+            # spm_voc_sz=$(( $spm_voc_sz - 3))
+            cut -f1 $model_dir/spm.$src-$tgt.vocab \
+            | tail -n +4 \
+            | sed "s/$/ 100/g" \
+            > $model_dir/fairseq.$src-$tgt.vocab
+            # > $bin_dir/dict.$src.txt
+            # cp $bin_dir/dict.{$src,$tgt}.txt
+
             fairseq-preprocess -s $src -t $tgt \
             --destdir $bin_dir \
             --trainpref $bpe_dir/train$bt \
             --validpref $bpe_dir/val \
-            --bpe sentencepiece \
+            --srcdict $model_dir/fairseq.$src-$tgt.vocab\
             --joined-dictionary \
-            --workers $(nproc)
-
-            ln -s $bin_dir $model_dir/bin
+            --workers $(nproc)            
         fi
+
+        ln -s $bin_dir $model_dir/bin
+
+        mkdir -p $model_dir/tensorboard
+        mkdir -p $model_dir/checkpoints
 
         fairseq-train $bin_dir \
         --arch $architecture \
@@ -26,12 +39,14 @@ function train() {
         --lr-scheduler inverse_sqrt \
         --warmup-init-lr 1e-07 --warmup-updates 16000 \
         --patience 10 \
+        --eval-bleu \
+        --best-checkpoint-metric bleu --maximize-best-checkpoint-metric \
+        --save-interval-updates 10000 \
         --clip-norm 5 \
         --max-tokens 4000 \
         --user-dir $HOME/robust_bench/convtransformer \
-        --save-dir $model_dir \
-        --no-epoch-checkpoints \
-        --no-last-checkpoints \
+        --save-dir $model_dir/checkpoints \
+        --tensorboard-logdir $model_dir/tensorboard \
         --num-workers $(nproc) \
         --skip-invalid-size-inputs-valid-test
     fi
@@ -46,7 +61,7 @@ function translate_dev() {
     | cut -d" " -f 1-1022 \
     | fairseq-interactive $model_dir/bin \
         -s $src -t $tgt \
-        --path $model_dir/checkpoint_best.pt \
+        --path $model_dir/checkpoints/$checkpoint \
         --buffer-size 2000 \
         --batch-size 32 \
         --beam 6 \
