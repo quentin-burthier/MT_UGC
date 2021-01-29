@@ -2,6 +2,7 @@
 # Adapted from https://medium.com/@Drew_Stokes/bash-argument-parsing-54f3b81a6a8f
 
 function parse_cli() {
+checkpoint=checkpoint_best
 joint_dictionary=false
 shuffle=true
 back_translate=false
@@ -106,6 +107,15 @@ while (( "$#" )); do
         exit 1
     fi
     ;;
+    -ckpt|--checkpoint)
+    if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        checkpoint=$2
+        shift 2
+    else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+    fi
+    ;;
     -btm|--back-translation-model)
     if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
         bt_model=$2
@@ -155,6 +165,7 @@ while (( "$#" )); do
   esac
 done
 }
+
 
 function set_dataset_args() {
 case $dataset in

@@ -14,11 +14,13 @@ def oov_grid(src="fr", tgt="en", src_side=True, to_latex=False) -> pd.DataFrame:
     side = src if src_side else tgt
 
     train_sets = [
-        ("Europarl", f"Europarl.{src}-{tgt}"),
+        ("EuroParl", f"Europarl.{src}-{tgt}"),
+        ("EuroParl small", f"Europarl_small.{src}-{tgt}"),
         ("Foursquare", "Foursquare"),
         ("MTNT", join("MTNT_reshuffled", f"{src}-{tgt}.1.0")),
         ("News-Commentary", f"News-Commentary.{src}-{tgt}"),
         ("OpenSubtitles", f"OpenSubtitles.{src}-{tgt}"),
+        ("OpenSubtitles small", f"OpenSubtitles_small.{src}-{tgt}"),
     ]
     dev_only_sets = [
         ("CrapBank", "Crapbank"),
