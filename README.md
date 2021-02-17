@@ -33,3 +33,20 @@ conda env config vars set DATA=/data/almanach/user/$(whoami)
 
 conda activate nmt
 ```
+
+### NEF settings
+
+Fairseq modules
+
+```bash
+#!/bin/bash
+module load conda/5.0.1-python3.6 cuda/11.0 cudnn/8.0-cuda-11.0 cmake/3.10.1
+export MKL_THREADING_LAYER=GNU
+```
+
+Marian modules
+
+```bash
+#!/bin/bash
+module load gcc/7.3.0 cuda/9.2 conda/5.0.1-python3.6
+```
