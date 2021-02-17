@@ -4,25 +4,9 @@ function train() {
     if [ ! -e "$model_dir/checkpoints/checkpoint_best.pt" ]
     then
         bin_dir=$bpe_dir/bin
-        if [ ! -e "$bin_dir/dict.$src.txt" ]
+        if [ ! -e "$bin_dir/dict.$tgt.txt" ]
         then
-            # echo "KENOBI"
-            # spm_voc_sz=$(wc -l $model_dir/spm.$src-$tgt.vocab | cut -d" " -f 1)
-            # spm_voc_sz=$(( $spm_voc_sz - 3))
-            cut -f1 $model_dir/spm.$src-$tgt.vocab \
-            | tail -n +4 \
-            | sed "s/$/ 100/g" \
-            > $model_dir/fairseq.$src-$tgt.vocab
-            # > $bin_dir/dict.$src.txt
-            # cp $bin_dir/dict.{$src,$tgt}.txt
-
-            fairseq-preprocess -s $src -t $tgt \
-            --destdir $bin_dir \
-            --trainpref $bpe_dir/train$bt \
-            --validpref $bpe_dir/val \
-            --srcdict $model_dir/fairseq.$src-$tgt.vocab\
-            --joined-dictionary \
-            --workers $(nproc)            
+            binarise_preprocess       
         fi
 
         ln -s $bin_dir $model_dir/bin
@@ -51,6 +35,37 @@ function train() {
         --skip-invalid-size-inputs-valid-test
     fi
 }
+
+
+function binarise_preprocess() {
+    if $joint_dictionary
+    then
+        cut -f1 $model_dir/spm.$src-$tgt.vocab \
+        | tail -n +4 \
+        | sed "s/$/ 100/g" \
+        > $model_dir/fairseq.$src-$tgt.vocab
+
+        dictargs="--joined-dictionary --srcdict $model_dir/fairseq.$src.vocab"
+    else
+        for lang in $src $tgt
+        do
+            cut -f1 $model_dir/spm.$lang.vocab \
+            | tail -n +4 \
+            | sed "s/$/ 100/g" \
+            > $model_dir/fairseq.$lang.vocab
+        done
+
+        dictargs="--srcdict $model_dir/fairseq.$src.vocab --tgtdict $model_dir/fairseq.$tgt.vocab"
+    fi
+
+    fairseq-preprocess -s $src -t $tgt \
+        --destdir $bin_dir \
+        --trainpref $bpe_dir/train$bt \
+        --validpref $bpe_dir/val \
+        $dictargs \
+        --workers $(nproc)
+}
+
 
 function translate_dev() {
     mkdir -p $output_dir

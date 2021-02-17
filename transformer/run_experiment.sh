@@ -1,15 +1,6 @@
 #!/bin/bash
 
-source $TOOLS/parse_cli.sh  # parse_cli, set_dataset_args
-
-# Default CLI args
-# framework=framework
-# architecture=transformer
-# src=en
-# tgt=fr
-# nwordssrc=32000
-# nwordstgt=32000
-# tokenlevel=bpe
+source $TOOLS/parse_cli.sh  # parse_cli, set_dataset_args, check_segmentation_args
 
 parse_cli $@
 
@@ -23,6 +14,8 @@ if [ ! -e "$input_dir/dev.$tgt" ]
 then
     $HOME/robust_bench/preprocessing/$dataset.sh $preprocess_args
 fi
+
+check_segmentation_args
 
 # Back-translation: tgt -> src model is assumed to have been trained
 if $back_translate && [ ! -e "$input_dir/train.bt.$src" ]
@@ -56,6 +49,6 @@ source ./scripts_$framework/train_generate.sh
 train
 translate_dev
 
-# calculate bleu scores on dev set
+# BLEU score
 echo ": Up. 0 :"
 cat $output_dir/dev.$tgt | sacrebleu $dir/raw/dev.$tgt

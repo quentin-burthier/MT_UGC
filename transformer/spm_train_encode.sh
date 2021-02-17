@@ -3,13 +3,6 @@
 function spm_train() {
     if $joint_dictionary
     then
-        if [ $tokenlevel == "char" ]
-        then
-            bpe_dir=$dir/$tokenlevel
-        else
-            bpe_dir=$dir/$tokenlevel.$nwordssrc
-        fi
-
         if [ ! -e "$model_dir/spm.$src-$tgt.model" ]
         then
             cat $input_dir/train.{$src,$tgt} \
@@ -19,16 +12,15 @@ function spm_train() {
             python $TOOLS/spm/train.py \
                 --input $input_dir/train.$src-$tgt \
                 --model_prefix $model_dir/spm.$src-$tgt \
-                --vocab_size $nwordssrc \
+                --vocab_size $nwords \
                 --character_coverage 1.0 \
-                --model_type $tokenlevel
+                --model_type $segmentation
 
             # rm $input_dir/train.$src-$tgt
         fi
         spm_src_model=$model_dir/spm.$src-$tgt.model
         spm_tgt_model=$model_dir/spm.$src-$tgt.model
     else
-        bpe_dir=$dir/$tokenlevel.$nwordssrc.$nwordstgt
         if [ ! -e "$model_dir/spm.$src.model" ]
         then
             python $TOOLS/spm/train.py \
@@ -36,7 +28,7 @@ function spm_train() {
                 --model_prefix $model_dir/spm.$src \
                 --vocab_size $nwordssrc \
                 --character_coverage 1.0 \
-                --model_type $tokenlevel
+                --model_type $src_segmentation
         fi
         if [ ! -e "$model_dir/spm.$tgt.model" ]
         then
@@ -45,7 +37,7 @@ function spm_train() {
                 --model_prefix=$model_dir/spm.$tgt \
                 --vocab_size=$nwordstgt \
                 --character_coverage=1.0 \
-                --model_type=$tokenlevel
+                --model_type=$tgt_segmentation
         fi
         spm_src_model=$model_dir/spm.$src.model
         spm_tgt_model=$model_dir/spm.$tgt.model

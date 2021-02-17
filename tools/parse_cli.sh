@@ -2,7 +2,7 @@
 # Adapted from https://medium.com/@Drew_Stokes/bash-argument-parsing-54f3b81a6a8f
 
 function parse_cli() {
-checkpoint=checkpoint_best
+checkpoint=checkpoint_best.pt
 joint_dictionary=false
 shuffle=true
 back_translate=false
@@ -45,9 +45,18 @@ while (( "$#" )); do
         exit 1
     fi
     ;;
-    --tokenlevel)
+    -sseg|--src_segmentation)
     if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
-        tokenlevel=$2
+        src_segmentation=$2
+        shift 2
+    else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+    fi
+    ;;
+    -tseg|--tgt_segmentation)
+    if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        tgt_segmentation=$2
         shift 2
     else
         echo "Error: Argument for $1 is missing" >&2
@@ -208,4 +217,39 @@ formated_date=$(date +"%d.%m.%Y_%T")
 if [ ! "$output_dir" ]; then output_dir=$dir/output_$formated_date; fi
 if [ ! "$val_output_dir" ]; then val_output_dir=$dir/val_output_$formated_date; fi
 if [ ! "$bt_dir" ]; then bt_dir=$dir/bt_$formated_date; fi
+}
+
+
+function check_segmentation_args() {
+    src_segmentation_name=$src_segmentation
+    if [ $src_segmentation != "char" ]
+    then
+        src_segmentation_name=$src_segmentation_name.$nwordssrc
+    fi
+
+    if $joint_dictionary
+    then
+        if [ "$src_segmentation" != "$tgt_segmentation" ]
+        then
+            echo "Joint-dictionary with different segmentations not supported.
+                  src: $src_segmentation ; tgt: $tgt_segmentation."
+            exit 1
+        elif [ "$nwordssrc" != "$nwordstgt" ]
+        then
+            echo "Joint-dictionary with different vocabulary sizes not supported.
+                  src: $nwordssrc ; tgt: $nwordstgt."
+            exit 1
+        else
+            segmentation=$src_segmentation
+            nwords=$nwordssrc
+            bpe_dir=$dir/$src_segmentation_name
+        fi
+    else
+        tgt_segmentation_name=$tgt_segmentation
+        if [ $tgt_segmentation != "char" ]
+        then
+            tgt_segmentation_name=$tgt_segmentation_name.$nwordstgt
+        fi
+        bpe_dir=$dir/$src_segmentation_name.$tgt_segmentation_name
+    fi
 }
