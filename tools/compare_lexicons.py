@@ -4,7 +4,7 @@ from typing import Tuple, Dict
 import os
 from os.path import join
 import itertools
-from collections import Counter
+from collections import Counter, defaultdict
 from random import sample
 import pandas as pd
 
@@ -14,19 +14,20 @@ def oov_grid(src="fr", tgt="en", src_side=True, to_latex=False) -> pd.DataFrame:
     side = src if src_side else tgt
 
     train_sets = [
-        ("EuroParl", f"Europarl.{src}-{tgt}"),
-        ("EuroParl small", f"Europarl_small.{src}-{tgt}"),
-        ("Foursquare", "Foursquare"),
+        ("EuParl", f"Europarl.{src}-{tgt}"),
+        ("EuParl small", f"Europarl_small.{src}-{tgt}"),
+        ("News", f"News-Commentary.{src}-{tgt}"),
+        ("OpenSub", f"OpenSubtitles.{src}-{tgt}"),
+        ("OpenSub small", f"OpenSubtitles_small.{src}-{tgt}"),
+    ]
+    dev_sets = [
+        ("EuParl", f"Europarl.{src}-{tgt}"),
+        ("News", f"News-Commentary.{src}-{tgt}"),
+        ("OpenSub", f"OpenSubtitles.{src}-{tgt}"),
         ("MTNT", join("MTNT_reshuffled", f"{src}-{tgt}.1.0")),
-        ("News-Commentary", f"News-Commentary.{src}-{tgt}"),
-        ("OpenSubtitles", f"OpenSubtitles.{src}-{tgt}"),
-        ("OpenSubtitles small", f"OpenSubtitles_small.{src}-{tgt}"),
+        ("PFSMB", "Crapbank"),
+        ("4SQ", "Foursquare"),
     ]
-    dev_only_sets = [
-        ("CrapBank", "Crapbank"),
-    ]
-
-    dev_sets = list(itertools.chain(train_sets, dev_only_sets))
 
     train_lexicons = {train_set: build_vocab(join(os.environ["DATA"], train_path,
                                              "preprocessed", f"train.{side}"))
@@ -38,12 +39,24 @@ def oov_grid(src="fr", tgt="en", src_side=True, to_latex=False) -> pd.DataFrame:
 
     df = oov_grid_dataframe(train_lexicons, dev_lexicons)
 
+    dev_sets_names = [dev_set for dev_set, _ in dev_sets]
+
+    set_order = ["EuParl", "EuParl small",
+                 "News",
+                 "OpenSub", "OpenSub small",
+                 "MTNT", "PFSMB", "4SQ"]
+    set_order_key = defaultdict(int, {dataset: i for i, dataset in enumerate(set_order)})
+    def index_sort_key(index):
+        return [set_order_key[idx] for idx in index]
+
+    df = df.sort_index(key=index_sort_key)
+
     if to_latex:
-        print(df["oov"].unstack().to_latex(float_format="%.1f"), end="\n\n")
-        print(df["unique_oov"].unstack().to_latex(float_format="%.1f"))
+        print(df["oov"].unstack()[dev_sets_names].to_latex(float_format="%.1f"), end="\n\n")
+        print(df["unique_oov"].unstack()[dev_sets_names].to_latex(float_format="%.1f"))
     else:
-        print(df["oov"].unstack(), end="\n\n")
-        print(df["unique_oov"].unstack())
+        print(df["oov"].unstack()[dev_sets_names], end="\n\n")
+        print(df["unique_oov"].unstack()[dev_sets_names])
 
 def oov_grid_dataframe(train_lexicons: Dict[str, Counter],
                        dev_lexicons: Dict[str, Counter]):
@@ -57,7 +70,7 @@ def oov_grid_dataframe(train_lexicons: Dict[str, Counter],
             df.loc[(train_name, dev_name), "oov"] = 100*p_oov
             df.loc[(train_name, dev_name), "unique_oov"] = 100*p_unique_oov
 
-    return df.sort_index()
+    return df
 
 
 def compare_lexicons(train_set: str, other_set: str,
