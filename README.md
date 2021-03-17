@@ -131,6 +131,17 @@ guild run -y --label $label \
 
 ## About the implementation
 
-  - `tools/spm/` can be replaced with `spm` if sentencepiece was installed from source.
+### Code structure
+
+Experiments logic is handled by `src/run_experiments`, successively
+1. Parsing the command line with the function `parse_cli` from `tools/parse_cli.sh`,
+2. Preprocessing the dataset used in the experiment (if the corpus has not already been preprocessed in a previous expriment) by calling the relevant `preprocessing/` script,
+3. Perfoming data augmentation (augmentation have not all been implemented),
+4. Training a model (if not already trained, i.e. if `checkpoint_best.pt` does not exist in the model checkpoints directory) by calling the `train`function from `src/scripts_$framework/train_generate.sh`,
+5. Translating the dataset source development side by calling the `translate_dev` function from `src/scripts_$framework/train_generate.sh`
+6. Computing the BLEU score on the development set with `sacrebleu`
+
+### Some remarks
+  - `tools/spm/` can be replaced with `spm` if sentencepiece was installed from source,
   - Reusing the sentencepiece vocabulary when using `marian` was not tested and may require to adapt the code.
-  - 
+  - Simultaneous preprocessing of a single data may cause failures. As a dataset only has to be preprocessed once, do not launch batch of experiments on a dataset before the preprocessing of these dataset has been completed during a previous experiment.
