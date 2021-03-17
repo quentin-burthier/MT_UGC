@@ -1,3 +1,5 @@
+"""Script creating arguments file for post-training validation."""
+
 import os
 import itertools
 import argparse

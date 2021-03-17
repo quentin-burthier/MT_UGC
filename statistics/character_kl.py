@@ -1,4 +1,5 @@
-"""Functions allowing to compare the lexicons of different datasets."""
+"""Functions allowing to compare the KL divergence of character ngrams distribution
+of different corpora."""
 
 from typing import Tuple, Dict
 import os
@@ -13,8 +14,15 @@ from scipy.stats import entropy
 import numpy as np
 import pandas as pd
 
-def KL_grid(src="fr", tgt="en", src_side=True, out_format="latex") -> pd.DataFrame:
-    """Prints the KL table."""
+def KL_grid(src="fr", tgt="en", src_side=True, out_format="") -> pd.DataFrame:
+    """Prints the Kullback-Leibler divergence of 3-grams characters distributions table.
+    
+    Args:
+        src (str): source language. Default: fr
+        tgt (en): source language. Default: en
+        src_side (bool): compares source side distribution. Default: True
+        out_format (str): tex, csv, or default pandas print
+    """
 
     side = src if src_side else tgt
 

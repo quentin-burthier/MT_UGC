@@ -209,7 +209,7 @@ case $dataset in
         dir=$DATA/Foursquare
     ;;
     *)
-        echo "Error: Unsupported flag $1" >&2
+        echo "Error: Unsupported dataset flag $1" >&2
         exit 1
     ;;
 esac

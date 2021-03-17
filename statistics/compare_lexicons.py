@@ -8,8 +8,15 @@ from collections import Counter, defaultdict
 from random import sample
 import pandas as pd
 
-def oov_grid(src="fr", tgt="en", src_side=True, to_latex=False) -> pd.DataFrame:
-    """Prints the OOV table."""
+def oov_grid(src="fr", tgt="en", src_side=True, out_format="") -> pd.DataFrame:
+    """Prints the OOV table.
+
+    Args:
+        src (str): source language. Default: fr
+        tgt (en): source language. Default: en
+        src_side (bool): compares source side distribution. Default: True
+        out_format (str): tex, csv, or default pandas print
+    """
 
     side = src if src_side else tgt
 
@@ -51,9 +58,12 @@ def oov_grid(src="fr", tgt="en", src_side=True, to_latex=False) -> pd.DataFrame:
 
     df = df.sort_index(key=index_sort_key)
 
-    if to_latex:
+    if out_format == "tex":
         print(df["oov"].unstack()[dev_sets_names].to_latex(float_format="%.1f"), end="\n\n")
         print(df["unique_oov"].unstack()[dev_sets_names].to_latex(float_format="%.1f"))
+    if out_format == "csv":
+        print(df["oov"].unstack()[dev_sets_names].to_csv(), end="\n\n")
+        print(df["unique_oov"].unstack()[dev_sets_names].to_csv())
     else:
         print(df["oov"].unstack()[dev_sets_names], end="\n\n")
         print(df["unique_oov"].unstack()[dev_sets_names])
@@ -67,8 +77,8 @@ def oov_grid_dataframe(train_lexicons: Dict[str, Counter],
     for train_name, train_lexicon in train_lexicons.items():
         for dev_name, dev_lexicon in dev_lexicons.items():
             _, p_oov, _, p_unique_oov = count_oov(train_lexicon, dev_lexicon, 0)
-            df.loc[(train_name, dev_name), "oov"] = 100*p_oov
-            df.loc[(train_name, dev_name), "unique_oov"] = 100*p_unique_oov
+            df.loc[(train_name, dev_name), "oov"] = 100 * p_oov
+            df.loc[(train_name, dev_name), "unique_oov"] = 100 * p_unique_oov
 
     return df
 
