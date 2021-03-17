@@ -68,12 +68,23 @@ Commit c8a0659
 export MKL_THREADING_LAYER=GNU
 ```
 
-## Usage
+## Example usage
 
 From `src/` directory:
 
 ```bash
-./run_experiment.sh 
+./run_experiment.sh \
+    -src $src -tgt $tgt \
+    --framework fairseq \
+    --dataset MTNT \
+    -sseg char \
+    --nwordssrc 128 \
+    -tseg bpe \
+    -nwordstgt 16000 \
+    -arch convtransformer \
+    --model $DATA/models.fairseq/convTrb.Europarl.MTNT.char.bpe.fr-en \
+    --gpus "0" \
+    --output-dir $DATA/translations/Trb.Europarl.MTNT.char.bpe.fr-en
 ```
 
 Arguments:
@@ -99,10 +110,23 @@ Arguments:
 ## Logging
 
 [guild.ai](https://guild.ai/) can be used for logging experiments.
+
 From `src/` directory:
 
 ```bash
-guild run
+guild run -y --label $label \
+    src=$src tgt=$tgt \
+    framework=fairseq \
+    dataset=MTNT \
+    sseg=char \
+    nwordssrc=128 \
+    tseg=bpe \
+    nwordstgt=16000 \
+    arch=transformer \
+    jointdict="" \
+    model=$DATA/models.fairseq/Trb.Europarl.MTNT.char.bpe.fr-en \
+    gpus="0" \
+    outputdir=$DATA/translations/Trb.Europarl.MTNT.char.bpe.fr-en
 ```
 
 ## About the implementation
